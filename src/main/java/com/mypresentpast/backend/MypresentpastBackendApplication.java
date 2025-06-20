@@ -13,7 +13,7 @@ public class MypresentpastBackendApplication {
         dotenv.entries().forEach(entry -> {
             System.setProperty(entry.getKey(), entry.getValue());
         });
-        
+
         SpringApplication.run(MypresentpastBackendApplication.class, args);
     }
 
