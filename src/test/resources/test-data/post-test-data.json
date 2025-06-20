@@ -1,0 +1,27 @@
+{
+  "createPostRequest": {
+    "title": "Test Post Title",
+    "content": "Este es un contenido de prueba para el post de test",
+    "date": "2025-06-16",
+    "category": "STORY",
+    "authorId": 1,
+    "latitude": -34.6118,
+    "longitude": -58.3960,
+    "address": "Buenos Aires, Argentina",
+    "isByIA": false
+  },
+  "updatePostRequest": {
+    "title": "Updated Test Post",
+    "content": "Contenido actualizado del post de prueba",
+    "category": "INFORMATION"
+  },
+  "expectedResponse": {
+    "id": 1,
+    "title": "Test Post Title",
+    "content": "Este es un contenido de prueba para el post de test",
+    "category": "STORY",
+    "isByIA": false,
+    "isVerified": false,
+    "status": "ACTIVE"
+  }
+} 
