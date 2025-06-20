@@ -53,13 +53,7 @@ public interface PostService {
      */
     PostResponse getRandomPost();
 
-    /**
-     * Corregir contenido de la publicación usando IA.
-     *
-     * @param postId el ID de la publicación
-     * @return el contenido corregido
-     */
-    String correctPostContentWithAI(Long postId);
+
 
     /**
      * Actualizar una publicación existente.

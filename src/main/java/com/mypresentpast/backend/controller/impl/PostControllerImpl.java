@@ -72,11 +72,7 @@ public class PostControllerImpl implements PostController {
         return ResponseEntity.ok(response);
     }
 
-    @Override
-    public ResponseEntity<String> correctPostContentWithAI(Long id) {
-        String correctedContent = postService.correctPostContentWithAI(id);
-        return ResponseEntity.ok(correctedContent);
-    }
+
 
     @Override
     public ResponseEntity<ApiResponse> updatePost(Long id, String data, List<MultipartFile> newImages) {

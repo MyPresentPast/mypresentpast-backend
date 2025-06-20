@@ -74,11 +74,7 @@ public interface PostController {
     @GetMapping("/random")
     ResponseEntity<PostResponse> getRandomPost();
 
-    /**
-     * Corregir contenido de post con IA.
-     */
-    @PutMapping("/{id}/correct")
-    ResponseEntity<String> correctPostContentWithAI(@PathVariable Long id);
+
 
     /**
      * Actualizar una publicación existente.

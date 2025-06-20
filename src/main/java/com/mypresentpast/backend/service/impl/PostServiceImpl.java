@@ -210,10 +210,7 @@ public class PostServiceImpl implements PostService {
         return mapToPostResponse(randomPost);
     }
 
-    @Override
-    public String correctPostContentWithAI(Long postId) {
-        return "[IA corregido] Contenido de ejemplo";
-    }
+
 
     @Override
     public ApiResponse updatePost(Long id, UpdatePostRequest request, List<MultipartFile> newImages) {
