@@ -1,10 +1,10 @@
 package com.mypresentpast.backend.service;
 
-import com.mypresentpast.backend.dto.ApiResponse;
-import com.mypresentpast.backend.dto.CreatePostRequest;
-import com.mypresentpast.backend.dto.MapResponse;
-import com.mypresentpast.backend.dto.PostResponse;
-import com.mypresentpast.backend.dto.UpdatePostRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.request.CreatePostRequest;
+import com.mypresentpast.backend.dto.response.MapResponse;
+import com.mypresentpast.backend.dto.response.PostResponse;
+import com.mypresentpast.backend.dto.request.UpdatePostRequest;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;

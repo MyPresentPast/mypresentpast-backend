@@ -1,4 +1,4 @@
-package com.mypresentpast.backend.dto;
+package com.mypresentpast.backend.dto.request;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;

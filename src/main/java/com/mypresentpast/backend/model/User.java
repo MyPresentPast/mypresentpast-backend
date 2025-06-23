@@ -20,7 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "users")
+@Table(name = "user_account")
 @Data
 @Builder
 @NoArgsConstructor
@@ -31,11 +31,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name is required")
+    @NotBlank()
     @Column(nullable = false)
     private String name;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank()
     @Column(nullable = false)
     private String password;
 

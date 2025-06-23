@@ -2,6 +2,12 @@ package com.mypresentpast.backend.dto;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.mypresentpast.backend.dto.request.CreatePostRequest;
+import com.mypresentpast.backend.dto.request.CorrectContentRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.response.CorrectContentResponse;
+import com.mypresentpast.backend.dto.response.MapResponse;
+import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.enums.Category;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;

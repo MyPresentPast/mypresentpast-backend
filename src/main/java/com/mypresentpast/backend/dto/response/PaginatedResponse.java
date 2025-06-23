@@ -1,4 +1,4 @@
-package com.mypresentpast.backend.dto;
+package com.mypresentpast.backend.dto.response;
 
 import java.util.List;
 import lombok.AllArgsConstructor;

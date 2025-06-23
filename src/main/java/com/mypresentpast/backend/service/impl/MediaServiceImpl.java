@@ -1,6 +1,6 @@
 package com.mypresentpast.backend.service.impl;
 
-import com.mypresentpast.backend.dto.ApiResponse;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.MediaDto;
 import com.mypresentpast.backend.enums.MediaType;
 import com.mypresentpast.backend.exception.ResourceNotFoundException;

@@ -1,4 +1,4 @@
-package com.mypresentpast.backend.dto;
+package com.mypresentpast.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -15,6 +15,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CorrectContentRequest {
 
-    @NotBlank(message = "El contenido es requerido para corrección")
+    @NotBlank()
     private String content;
 } 

@@ -1,6 +1,10 @@
 package com.mypresentpast.backend.exception;
 
-import com.mypresentpast.backend.dto.ApiResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.response.ErrorResponse;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,15 +37,20 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
-        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
-            .map(FieldError::getDefaultMessage)
-            .collect(Collectors.joining(", "));
+    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
+        List<String> details = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(Collectors.toList());
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.builder()
-                .message("Error de validación: " + errorMessage)
-                .build());
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message("Error de validación")
+                .details(details)
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
@@ -52,6 +61,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ApiResponse.builder()
                 .message("Error interno del servidor: " + ex.getMessage())
+                .build());
+    }
+
+    @ExceptionHandler(JsonProcessingException.class)
+    public ResponseEntity<ApiResponse> handleJsonProcessingException(JsonProcessingException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.builder()
+                .message("Error al procesar datos JSON: " + ex.getMessage())
                 .build());
     }
 }

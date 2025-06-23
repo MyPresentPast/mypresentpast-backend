@@ -1,8 +1,8 @@
 package com.mypresentpast.backend.controller.impl;
 
 import com.mypresentpast.backend.controller.AIController;
-import com.mypresentpast.backend.dto.CorrectContentRequest;
-import com.mypresentpast.backend.dto.CorrectContentResponse;
+import com.mypresentpast.backend.dto.request.CorrectContentRequest;
+import com.mypresentpast.backend.dto.response.CorrectContentResponse;
 import com.mypresentpast.backend.service.AIService;
 import com.mypresentpast.backend.service.ai.OpenAIProvider;
 import java.util.HashMap;

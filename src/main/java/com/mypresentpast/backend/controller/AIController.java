@@ -1,7 +1,7 @@
 package com.mypresentpast.backend.controller;
 
-import com.mypresentpast.backend.dto.CorrectContentRequest;
-import com.mypresentpast.backend.dto.CorrectContentResponse;
+import com.mypresentpast.backend.dto.request.CorrectContentRequest;
+import com.mypresentpast.backend.dto.response.CorrectContentResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

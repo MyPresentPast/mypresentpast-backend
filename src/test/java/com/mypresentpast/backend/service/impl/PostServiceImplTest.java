@@ -12,11 +12,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mypresentpast.backend.dto.ApiResponse;
-import com.mypresentpast.backend.dto.CreatePostRequest;
-import com.mypresentpast.backend.dto.MapResponse;
-import com.mypresentpast.backend.dto.PostResponse;
-import com.mypresentpast.backend.dto.UpdatePostRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.request.CreatePostRequest;
+import com.mypresentpast.backend.dto.response.MapResponse;
+import com.mypresentpast.backend.dto.response.PostResponse;
+import com.mypresentpast.backend.dto.request.UpdatePostRequest;
 import com.mypresentpast.backend.enums.Category;
 import com.mypresentpast.backend.enums.PostStatus;
 import com.mypresentpast.backend.enums.UserRol;

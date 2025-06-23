@@ -18,7 +18,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     /**
      * Query única y elegante con filtros opcionales.
-     * Usa COALESCE para manejar parámetros NULL de forma explícita.
      */
     @Query(value = "SELECT p.* FROM posts p " +
         "JOIN locations l ON p.location_id = l.id " +

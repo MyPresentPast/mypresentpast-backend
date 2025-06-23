@@ -1,7 +1,7 @@
 package com.mypresentpast.backend.service.impl;
 
-import com.mypresentpast.backend.dto.CorrectContentRequest;
-import com.mypresentpast.backend.dto.CorrectContentResponse;
+import com.mypresentpast.backend.dto.request.CorrectContentRequest;
+import com.mypresentpast.backend.dto.response.CorrectContentResponse;
 import com.mypresentpast.backend.service.AIService;
 import com.mypresentpast.backend.service.ai.GroqProvider;
 import lombok.RequiredArgsConstructor;

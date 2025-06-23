@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
  * Entity representing a post in the MyPresentPast system.
  */
 @Entity
-@Table(name = "posts")
+@Table(name = "post")
 @Data
 @Builder
 @NoArgsConstructor

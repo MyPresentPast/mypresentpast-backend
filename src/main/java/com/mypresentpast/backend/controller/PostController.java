@@ -1,8 +1,9 @@
 package com.mypresentpast.backend.controller;
 
-import com.mypresentpast.backend.dto.ApiResponse;
-import com.mypresentpast.backend.dto.MapResponse;
-import com.mypresentpast.backend.dto.PostResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.response.MapResponse;
+import com.mypresentpast.backend.dto.response.PostResponse;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -33,7 +34,7 @@ public interface PostController {
     ResponseEntity<ApiResponse> createPost(
         @RequestParam("data") String data,
         @RequestParam(value = "images", required = false) List<MultipartFile> images
-    );
+    ) throws JsonProcessingException;
 
     /**
      * Obtener una publicación por ID.
@@ -88,7 +89,7 @@ public interface PostController {
         @PathVariable Long id,
         @RequestParam("data") String data,
         @RequestParam(value = "newImages", required = false) List<MultipartFile> newImages
-    );
+    ) throws JsonProcessingException;
 
     /**
      * Eliminar una publicación (eliminación lógica).

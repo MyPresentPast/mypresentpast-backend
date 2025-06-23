@@ -1,12 +1,13 @@
 package com.mypresentpast.backend.controller.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mypresentpast.backend.controller.PostController;
-import com.mypresentpast.backend.dto.ApiResponse;
-import com.mypresentpast.backend.dto.CreatePostRequest;
-import com.mypresentpast.backend.dto.MapResponse;
-import com.mypresentpast.backend.dto.PostResponse;
-import com.mypresentpast.backend.dto.UpdatePostRequest;
+import com.mypresentpast.backend.dto.request.CreatePostRequest;
+import com.mypresentpast.backend.dto.request.UpdatePostRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.response.MapResponse;
+import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.service.PostService;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,18 +30,10 @@ public class PostControllerImpl implements PostController {
     private final ObjectMapper objectMapper;
 
     @Override
-    public ResponseEntity<ApiResponse> createPost(String data, List<MultipartFile> images) {
-        try {
-            CreatePostRequest request = objectMapper.readValue(data, CreatePostRequest.class);
-            ApiResponse response = postService.createPost(request, images);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                ApiResponse.builder()
-                    .message("Error al procesar datos: " + e.getMessage())
-                    .build()
-            );
-        }
+    public ResponseEntity<ApiResponse> createPost(String data, List<MultipartFile> images) throws JsonProcessingException {
+        CreatePostRequest request = objectMapper.readValue(data, CreatePostRequest.class);
+        ApiResponse response = postService.createPost(request, images);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Override
@@ -54,7 +47,6 @@ public class PostControllerImpl implements PostController {
         double latMin, double latMax, double lonMin, double lonMax,
         String category, LocalDate date) {
 
-        // Validaciones
         if (date != null && date.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("No se pueden consultar fechas futuras");
         }
@@ -72,21 +64,11 @@ public class PostControllerImpl implements PostController {
         return ResponseEntity.ok(response);
     }
 
-
-
     @Override
-    public ResponseEntity<ApiResponse> updatePost(Long id, String data, List<MultipartFile> newImages) {
-        try {
-            UpdatePostRequest request = objectMapper.readValue(data, UpdatePostRequest.class);
-            ApiResponse response = postService.updatePost(id, request, newImages);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                ApiResponse.builder()
-                    .message("Error al procesar datos: " + e.getMessage())
-                    .build()
-            );
-        }
+    public ResponseEntity<ApiResponse> updatePost(Long id, String data, List<MultipartFile> newImages) throws JsonProcessingException {
+        UpdatePostRequest request = objectMapper.readValue(data, UpdatePostRequest.class);
+        ApiResponse response = postService.updatePost(id, request, newImages);
+        return ResponseEntity.ok(response);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.mypresentpast.backend.service;
 
-import com.mypresentpast.backend.dto.CorrectContentRequest;
-import com.mypresentpast.backend.dto.CorrectContentResponse;
+import com.mypresentpast.backend.dto.request.CorrectContentRequest;
+import com.mypresentpast.backend.dto.response.CorrectContentResponse;
 
 /**
  * Servicio para funcionalidades de Inteligencia Artificial.

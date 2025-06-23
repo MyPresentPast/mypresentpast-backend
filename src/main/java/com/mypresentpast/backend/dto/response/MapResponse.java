@@ -1,4 +1,4 @@
-package com.mypresentpast.backend.dto;
+package com.mypresentpast.backend.dto.response;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * Response DTO simplificado para el endpoint del mapa.
- * Solo devuelve la lista de posts. El frontend maneja todo lo demás.
  */
 @Data
 @Builder

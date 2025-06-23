@@ -1,4 +1,4 @@
-package com.mypresentpast.backend.dto;
+package com.mypresentpast.backend.dto.request;
 
 import com.mypresentpast.backend.enums.Category;
 import jakarta.validation.constraints.NotBlank;
@@ -20,28 +20,28 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdatePostRequest {
 
-    @NotBlank(message = "El título es requerido")
+    @NotBlank()
     private String title;
 
-    @NotNull(message = "La latitud es requerida")
+    @NotNull()
     private Double latitude;
 
-    @NotNull(message = "La longitud es requerida")
+    @NotNull()
     private Double longitude;
 
-    @NotBlank(message = "La dirección es requerida")
+    @NotBlank()
     private String address;
 
-    @NotBlank(message = "El contenido es requerido")
+    @NotBlank()
     private String content;
 
-    @NotNull(message = "La fecha es requerida")
+    @NotNull()
     private LocalDate date;
 
-    @NotNull(message = "La categoría es requerida")
+    @NotNull()
     private Category category;
 
-    @NotNull(message = "El autor es requerido")
+    @NotNull()
     private Long authorId;
 
     @Builder.Default

@@ -1,6 +1,6 @@
 package com.mypresentpast.backend.service;
 
-import com.mypresentpast.backend.dto.ApiResponse;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.MediaDto;
 import com.mypresentpast.backend.model.Media;
 import java.util.List;
