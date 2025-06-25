@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Repositorio para operaciones con Post.
- * Extiende JpaRepository para operaciones CRUD básicas.
  */
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -19,8 +18,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     /**
      * Query única y elegante con filtros opcionales.
      */
-    @Query(value = "SELECT p.* FROM posts p " +
-        "JOIN locations l ON p.location_id = l.id " +
+    @Query(value = "SELECT p.* FROM post p " +
+        "JOIN location l ON p.location_id = l.id " +
         "WHERE l.latitude BETWEEN :latMin AND :latMax " +
         "AND l.longitude BETWEEN :lonMin AND :lonMax " +
         "AND p.status = 'ACTIVE' " +

@@ -19,6 +19,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Entidad representante de User.
+ */
 @Entity
 @Table(name = "user_account")
 @Data

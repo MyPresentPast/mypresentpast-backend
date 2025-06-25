@@ -25,7 +25,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Entity representing a post in the MyPresentPast system.
+ * Entidad representante de Post.
  */
 @Entity
 @Table(name = "post")
@@ -39,7 +39,7 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Title is required")
+    @NotBlank()
     @Column(nullable = false, length = 500)
     private String title;
 
@@ -49,11 +49,11 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Media> media;
 
-    @NotNull(message = "Posted date is required")
+    @NotNull()
     @Column(name = "posted_at", nullable = false)
     private LocalDate postedAt;
 
-    @NotNull(message = "Event date is required")
+    @NotNull()
     @Column(nullable = false)
     private LocalDate date;
 

@@ -12,6 +12,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Entidad representante de Location.
+ */
 @Entity
 @Table(name = "location")
 @Data
@@ -24,7 +27,7 @@ public class Location {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Address is required")
+    @NotBlank()
     @Column(nullable = false)
     private String address;
 

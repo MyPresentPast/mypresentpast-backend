@@ -20,7 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Entity representing media files (images, videos, etc.) associated with posts.
+ * Entidad representante de Media.
  */
 @Entity
 @Table(name = "media")
@@ -35,11 +35,11 @@ public class Media {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "Media type is required")
+    @NotNull()
     @Column(nullable = false)
     private MediaType type;
 
-    @NotBlank(message = "URL is required")
+    @NotBlank()
     @Column(nullable = false)
     private String url;
 
@@ -49,4 +49,4 @@ public class Media {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
-} 
+}
