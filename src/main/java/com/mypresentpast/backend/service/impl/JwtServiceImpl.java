@@ -19,8 +19,12 @@ import java.util.function.Function;
 
 @Service
 public class JwtServiceImpl implements JwtService {
+
     @Value("${jwt.secret.key}")
     private String secretKey;
+
+    @Value("${jwt.expiration.ms}")
+    private long expirationTimeMs;
 
     @Override
     public String getToken(UserDetails user){
@@ -44,7 +48,7 @@ public class JwtServiceImpl implements JwtService {
                 .setClaims(extractClaims)
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis()+1000*60*24)) // los tokens van a durar un dia
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTimeMs)) // los tokens van a durar un dia
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
