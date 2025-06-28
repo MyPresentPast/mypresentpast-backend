@@ -15,18 +15,25 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "app_user")
+@Table(name = "user_account")
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
+
     @Column(nullable = false, unique = true)
     String profileUsername;
     String password;
+
     @Column(nullable = false, unique = true)
     String email;
+
     @Enumerated(EnumType.STRING)
-    UserRole role;
+    @Column(nullable = false)
+    @Builder.Default
+    UserRole role = UserRole.NORMAL;
+
+    private String avatar;
 
     @Override
     public String getUsername() {
