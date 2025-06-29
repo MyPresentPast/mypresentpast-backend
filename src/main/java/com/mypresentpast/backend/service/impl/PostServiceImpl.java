@@ -425,8 +425,8 @@ public class PostServiceImpl implements PostService {
         if (post.getAuthor() != null) {
             UserDto authorDto = new UserDto();
             authorDto.setId(post.getAuthor().getId());
-            authorDto.setName(post.getAuthor().getName());
-            authorDto.setType(post.getAuthor().getType());
+            authorDto.setName(post.getAuthor().getProfileUsername());
+            authorDto.setType(post.getAuthor().getRole());
             authorDto.setAvatar(post.getAuthor().getAvatar());
             response.setAuthor(authorDto);
         }
