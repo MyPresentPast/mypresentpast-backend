@@ -31,10 +31,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-security</artifactId>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -60,11 +60,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.security</groupId>-->
-<!--            <artifactId>spring-security-test</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>io.github.cdimascio</groupId>
             <artifactId>dotenv-java</artifactId>
@@ -73,7 +73,24 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <version>1.18.30</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.6</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
+            <version>0.12.6</version>
+            <scope>runtime</scope>
         </dependency>
         <!-- Cloudinary dependency for image management -->
         <dependency>
@@ -126,6 +143,13 @@
                     <source>17</source>
                     <target>17</target>
                     <release>17</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.30</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <!-- JaCoCo para coverage -->
@@ -137,25 +161,25 @@
                     <excludes>
                         <!-- Excluir DTOs - Solo getters/setters generados por Lombok -->
                         <exclude>**/dto/**</exclude>
-                        
+
                         <!-- Excluir Enums - Solo valores constantes -->
                         <exclude>**/enums/**</exclude>
-                        
+
                         <!-- Excluir Modelos - Solo JPA entities con Lombok -->
                         <exclude>**/model/**</exclude>
-                        
+
                         <!-- Excluir Configuraciones - Setup de Spring -->
                         <exclude>**/config/**</exclude>
-                        
+
                         <!-- Excluir Application main - Solo bootstrap -->
                         <exclude>**/MypresentpastBackendApplication.class</exclude>
-                        
+
                         <!-- Excluir Excepciones - Solo constructores simples -->
                         <exclude>**/exception/**</exclude>
-                        
+
                         <!-- Excluir Repositorios - Solo interfaces JPA -->
                         <exclude>**/repository/**</exclude>
-                        
+
                         <!-- Excluir Controllers - Solo bindeo HTTP (si no tienen lógica) -->
                         <exclude>**/controller/**</exclude>
                     </excludes>

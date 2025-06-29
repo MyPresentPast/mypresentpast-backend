@@ -1,6 +1,6 @@
 package com.mypresentpast.backend.dto;
 
-import com.mypresentpast.backend.enums.UserRol;
+import com.mypresentpast.backend.model.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +16,6 @@ import lombok.NoArgsConstructor;
 public class UserDto {
     private Long id;
     private String name;
-    private UserRol type;
+    private UserRole type;
     private String avatar;
 }

@@ -1,55 +1,82 @@
 package com.mypresentpast.backend.model;
 
-import com.mypresentpast.backend.enums.UserRol;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * Entidad representante de User.
  */
-@Entity
-@Table(name = "user_account")
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
-
+@Builder
+@Entity
+@Table(name = "user_account")
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank()
-    @Column(nullable = false)
-    private String name;
+    @Column(nullable = false, unique = true)
+    String profileUsername;
 
     @NotBlank()
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false, unique = true)
+    String email;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private UserRol type = UserRol.NORMAL;
+    UserRole role = UserRole.NORMAL;
 
     @Column
     private String avatar;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Post> posts;
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
+
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.name()));
+    }
+
+    /*
+    Como nosotros vamos a trabajar con un token, no hacen falta estos metodos porque se controla en el JwtService.
+     */
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
