@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Endpoints - MyPresentPast Backend</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 40px;
+            font-size: 1.8em;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 30px;
+            font-size: 1.4em;
+        }
+        h4 {
+            color: #7f8c8d;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        code {
+            background: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            color: #e74c3c;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .method-get { border-left: 5px solid #28a745; }
+        .method-post { border-left: 5px solid #007bff; }
+        .method-put { border-left: 5px solid #ffc107; }
+        .method-delete { border-left: 5px solid #dc3545; }
+        .example {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="emoji">🚀</span>API Endpoints - MyPresentPast Backend</h1>
+        
+        <div class="info">
+            <strong>Base URL:</strong> <code>http://localhost:8081/api</code>
+        </div>
+
+        <h2><span class="emoji">🅰️</span>Servicio Angular Base</h2>
+        <pre><code>import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class PostService {
+  private baseUrl = 'http://localhost:8081/api';
+
+  constructor(private http: HttpClient) {}
+
+  // Métodos disponibles en los ejemplos de abajo
+}</code></pre>
+
+        <h2><span class="emoji">📍</span>Consultar Posts</h2>
+
+        <div class="endpoint method-get">
+            <h3>GET /posts/map - Posts por área geográfica</h3>
+            <h4>Parámetros:</h4>
+            <ul>
+                <li><code>latMin, latMax</code> (double) - Rango de latitud del mapa visible</li>
+                <li><code>lonMin, lonMax</code> (double) - Rango de longitud del mapa visible</li>
+                <li><code>category</code> (opcional) - Filtro: "STORY", "INFORMATION", "MYTH"</li>
+                <li><code>date</code> (opcional) - Fecha del evento "YYYY-MM-DD"</li>
+            </ul>
+
+            <h4>Angular:</h4>
+            <pre><code>getMapData(latMin: number, latMax: number, lonMin: number, lonMax: number, 
+           category?: string, date?: string): Observable&lt;any&gt; {
+  let params = `?latMin=${latMin}&latMax=${latMax}&lonMin=${lonMin}&lonMax=${lonMax}`;
+  if (category) params += `&category=${category}`;
+  if (date) params += `&date=${date}`;
+  
+  return this.http.get&lt;any&gt;(`${this.baseUrl}/posts/map${params}`);
+}</code></pre>
+
+            <h4>Respuesta:</h4>
+            <pre><code>{
+  "posts": [
+    {
+      "id": 1,
+      "title": "La Histórica Nevada de Villa María",
+      "content": "El 9 de julio de 2006...",
+      "date": "2006-07-09",
+      "postedAt": "2024-01-15",
+      "category": "STORY",
+      "isByIA": false,
+      "isVerified": true,
+      "status": "ACTIVE",
+      "author": {
+        "id": 1,
+        "name": "mferradans",
+        "type": "ADMIN",
+        "avatar": "https://images.unsplash.com/photo-123.jpg"
+      },
+      "location": {
+        "id": 1,
+        "address": "Villa María, Córdoba, Argentina",
+        "latitude": -32.4075,
+        "longitude": -63.2406
+      },
+      "media": [
+        {
+          "id": 1,
+          "type": "IMAGE",
+          "url": "http://res.cloudinary.com/dubl1j9qo/image/upload/v123/imagen.png"
+        }
+      ]
+    }
+  ]
+}</code></pre>
+        </div>
+
+        <div class="endpoint method-get">
+            <h3>GET /posts/{id} - Post específico</h3>
+            <pre><code>getPostById(id: number): Observable&lt;any&gt; {
+  return this.http.get&lt;any&gt;(`${this.baseUrl}/posts/${id}`);
+}</code></pre>
+        </div>
+
+        <div class="endpoint method-get">
+            <h3>GET /posts/random - Post aleatorio para "explorar"</h3>
+            <pre><code>getRandomPost(): Observable&lt;any&gt; {
+  return this.http.get&lt;any&gt;(`${this.baseUrl}/posts/random`);
+}</code></pre>
+        </div>
+
+        <h2><span class="emoji">✍️</span>Crear Post</h2>
+
+        <div class="endpoint method-post">
+            <h3>POST /posts</h3>
+            <p><strong>Content-Type:</strong> <code>multipart/form-data</code></p>
+
+            <h4>Payload Angular:</h4>
+            <pre><code>// Servicio Angular
+createPost(postData: any, images: File[]): Observable&lt;any&gt; {
+  const formData = new FormData();
+  
+  // JSON como string
+  formData.append('data', JSON.stringify({
+    title: postData.title,
+    latitude: postData.latitude,
+    longitude: postData.longitude,
+    address: postData.address,
+    content: postData.content,
+    date: postData.date,
+    category: postData.category,
+    authorId: postData.authorId,
+    isByIA: false
+  }));
+
+  // Imágenes (opcional, máximo 5)
+  images.forEach(image =&gt; {
+    formData.append('images', image);
+  });
+
+  return this.http.post&lt;any&gt;(`${this.baseUrl}/posts`, formData);
+}</code></pre>
+
+            <h4>cURL ejemplo:</h4>
+            <pre><code>curl -X POST http://localhost:8081/api/posts \
+  -F 'data={"title":"Nueva publicación","latitude":-34.6037,"longitude":-58.3816,"address":"Buenos Aires","content":"Mi contenido","date":"2024-06-16","category":"STORY","authorId":1,"isByIA":false}' \
+  -F 'images=@imagen1.jpg' \
+  -F 'images=@imagen2.jpg'</code></pre>
+
+            <h4>Respuesta:</h4>
+            <pre><code>{
+  "message": "Publicación creada con éxito"
+}</code></pre>
+        </div>
+
+        <h2><span class="emoji">✏️</span>Editar Post</h2>
+
+        <div class="endpoint method-put">
+            <h3>PUT /posts/{id}</h3>
+            <p><strong>Content-Type:</strong> <code>multipart/form-data</code></p>
+
+            <div class="info">
+                <h4>Flujo de edición:</h4>
+                <ol>
+                    <li><strong>Cargar post:</strong> <code>GET /posts/{id}</code> retorna imágenes existentes con sus IDs</li>
+                    <li><strong>Usuario edita:</strong> Mantiene, elimina o agrega imágenes</li>
+                    <li><strong>Guardar:</strong> Envía <code>keepImageIds</code> con IDs a conservar + nuevas imágenes</li>
+                </ol>
+            </div>
+
+            <h4>Payload Angular:</h4>
+            <pre><code>// Servicio Angular
+updatePost(postId: number, postData: any, newImages: File[], keepImageIds: number[]): Observable&lt;any&gt; {
+  const formData = new FormData();
+  
+  // Datos actualizados + IDs de imágenes a conservar
+  formData.append('data', JSON.stringify({
+    title: postData.title,
+    latitude: postData.latitude,
+    longitude: postData.longitude,
+    address: postData.address,
+    content: postData.content,
+    date: postData.date,
+    category: postData.category,
+    authorId: postData.authorId,
+    isByIA: false,
+    keepImageIds: keepImageIds // IDs de imágenes existentes a mantener
+  }));
+
+  // Nuevas imágenes a agregar (opcional)
+  newImages.forEach(image =&gt; {
+    formData.append('newImages', image);
+  });
+
+  return this.http.put&lt;any&gt;(`${this.baseUrl}/posts/${postId}`, formData);
+}</code></pre>
+
+            <h4>Ejemplos de uso:</h4>
+
+            <div class="example">
+                <h4><span class="emoji">🔹</span>Mantener todas las imágenes existentes (sin cambios):</h4>
+                <pre><code>// keepImageIds = [19, 20, 21] (todos los IDs existentes)
+// newImages = [] (sin nuevas imágenes)</code></pre>
+            </div>
+
+            <div class="example">
+                <h4><span class="emoji">🔹</span>Eliminar imagen 20, mantener 19 y 21:</h4>
+                <pre><code>// keepImageIds = [19, 21] (sin el ID 20)
+// newImages = [] (sin nuevas imágenes)</code></pre>
+            </div>
+
+            <div class="example">
+                <h4><span class="emoji">🔹</span>Reemplazar todas las imágenes:</h4>
+                <pre><code>// keepImageIds = [] (vacío = elimina todas)
+// newImages = [nuevaImagen1.jpg, nuevaImagen2.jpg]</code></pre>
+            </div>
+
+            <div class="example">
+                <h4><span class="emoji">🔹</span>Mantener imagen 19, eliminar 20 y 21, agregar 2 nuevas:</h4>
+                <pre><code>// keepImageIds = [19] (solo mantiene la 19)
+// newImages = [nueva1.jpg, nueva2.jpg]</code></pre>
+            </div>
+
+            <h4>cURL ejemplos:</h4>
+            <pre><code># Mantener todas las imágenes existentes (IDs: 19, 20, 21)
+curl -X PUT http://localhost:8081/api/posts/15 \
+  -F 'data={"title":"Título actualizado","keepImageIds":[19,20,21],"authorId":1}'
+
+# Eliminar imagen 20, mantener 19 y 21  
+curl -X PUT http://localhost:8081/api/posts/15 \
+  -F 'data={"title":"Sin imagen 20","keepImageIds":[19,21],"authorId":1}'
+
+# Reemplazar todas por una nueva
+curl -X PUT http://localhost:8081/api/posts/15 \
+  -F 'data={"title":"Nueva imagen","keepImageIds":[],"authorId":1}' \
+  -F 'newImages=@nueva.jpg'</code></pre>
+
+            <h4>Respuesta:</h4>
+            <pre><code>{
+  "message": "Publicación actualizada con éxito"
+}</code></pre>
+        </div>
+
+        <h2><span class="emoji">🗑️</span>Eliminar Post</h2>
+
+        <div class="endpoint method-delete">
+            <h3>DELETE /posts/{id}</h3>
+            <pre><code>deletePost(id: number): Observable&lt;any&gt; {
+  return this.http.delete&lt;any&gt;(`${this.baseUrl}/posts/${id}`);
+}</code></pre>
+
+            <h4>Respuesta:</h4>
+            <pre><code>{
+  "message": "Publicación eliminada con éxito"
+}</code></pre>
+        </div>
+
+        <h2><span class="emoji">🤖</span>IA - Corrección de Texto</h2>
+
+        <div class="endpoint method-post">
+            <h3>POST /ai/correct-content</h3>
+            <pre><code>correctContent(content: string): Observable&lt;any&gt; {
+  const payload = { content };
+  return this.http.post&lt;any&gt;(`${this.baseUrl}/ai/correct-content`, payload);
+}</code></pre>
+
+            <h4>Payload:</h4>
+            <pre><code>{
+  "content": "texto con herrores de ortografia y gramatica"
+}</code></pre>
+
+            <h4>Respuesta:</h4>
+            <pre><code>{
+  "originalContent": "texto con herrores de ortografia y gramatica",
+  "correctedContent": "texto con errores de ortografía y gramática",
+  "hasChanges": true,
+  "message": "Contenido corregido por Groq (Gratuito)"
+}</code></pre>
+        </div>
+
+        <h2><span class="emoji">📋</span>Validaciones</h2>
+
+        <div class="warning">
+            <h3>Imágenes:</h3>
+            <ul>
+                <li><strong>Máximo:</strong> 5 por post</li>
+                <li><strong>Tamaño:</strong> 10MB por archivo</li>
+                <li><strong>Formatos:</strong> JPG, PNG, GIF, WebP</li>
+                <li><strong>Compresión:</strong> Automática a 1200x800px</li>
+            </ul>
+
+            <h3>Coordenadas:</h3>
+            <ul>
+                <li><strong>Formato:</strong> Decimales (ej: -32.4075, -63.2403)</li>
+                <li><strong>Argentina:</strong> -55 a -20 lat, -75 a -53 lon</li>
+            </ul>
+
+            <h3>Fechas:</h3>
+            <ul>
+                <li><strong>Formato:</strong> "YYYY-MM-DD"</li>
+                <li><strong>Restricción:</strong> No futuras</li>
+            </ul>
+
+            <h3>Categorías:</h3>
+            <ul>
+                <li><code>STORY</code>: Historias y relatos</li>
+                <li><code>INFORMATION</code>: Datos históricos</li>
+                <li><code>MYTH</code>: Leyendas y mitos</li>
+            </ul>
+        </div>
+
+        <h2><span class="emoji">🌐</span>URLs de Imágenes</h2>
+
+        <div class="info">
+            <p>Las imágenes se optimizan automáticamente en Cloudinary:</p>
+            <pre><code>http://res.cloudinary.com/dubl1j9qo/image/upload/v{timestamp}/{filename}</code></pre>
+
+            <h4>Características:</h4>
+            <ul>
+                <li>✅ Compresión automática para web</li>
+                <li>✅ Formato WebP cuando es posible</li>
+                <li>✅ CDN global rápido</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 

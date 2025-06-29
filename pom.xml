@@ -41,6 +41,11 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
@@ -87,6 +92,29 @@
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Cloudinary dependency for image management -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http5</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        <!-- Test dependencies adicionales -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -114,6 +142,7 @@
                 <configuration>
                     <source>17</source>
                     <target>17</target>
+                    <release>17</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -123,10 +152,38 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+            <!-- JaCoCo para coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.11</version>
+                <version>0.8.12</version>
+                <configuration>
+                    <excludes>
+                        <!-- Excluir DTOs - Solo getters/setters generados por Lombok -->
+                        <exclude>**/dto/**</exclude>
+
+                        <!-- Excluir Enums - Solo valores constantes -->
+                        <exclude>**/enums/**</exclude>
+
+                        <!-- Excluir Modelos - Solo JPA entities con Lombok -->
+                        <exclude>**/model/**</exclude>
+
+                        <!-- Excluir Configuraciones - Setup de Spring -->
+                        <exclude>**/config/**</exclude>
+
+                        <!-- Excluir Application main - Solo bootstrap -->
+                        <exclude>**/MypresentpastBackendApplication.class</exclude>
+
+                        <!-- Excluir Excepciones - Solo constructores simples -->
+                        <exclude>**/exception/**</exclude>
+
+                        <!-- Excluir Repositorios - Solo interfaces JPA -->
+                        <exclude>**/repository/**</exclude>
+
+                        <!-- Excluir Controllers - Solo bindeo HTTP (si no tienen lógica) -->
+                        <exclude>**/controller/**</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -135,7 +192,7 @@
                     </execution>
                     <execution>
                         <id>report</id>
-                        <phase>prepare-package</phase>
+                        <phase>test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>

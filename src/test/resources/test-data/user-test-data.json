@@ -1,0 +1,16 @@
+{
+  "testUser": {
+    "id": 1,
+    "name": "Test User",
+    "password": "password123",
+    "avatar": "avatar.jpg",
+    "type": "NORMAL"
+  },
+  "adminUser": {
+    "id": 2,
+    "name": "Admin User", 
+    "password": "admin123",
+    "avatar": "admin-avatar.jpg",
+    "type": "NORMAL"
+  }
+} 

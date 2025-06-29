@@ -1,5 +1,7 @@
 package com.mypresentpast.backend.exception;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.ErrorResponse;
 import com.mypresentpast.backend.utils.CommonFunctions;
 import com.mypresentpast.backend.utils.MessageBundle;
@@ -14,6 +16,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Global exception handler for the application.
+ * Centralizes error handling following Single Responsibility Principle.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -75,6 +81,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        // Log del error completo para debugging
         ex.printStackTrace();
 
         ErrorResponse response = ErrorResponse.builder()
@@ -103,4 +110,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(JsonProcessingException.class)
+    public ResponseEntity<ApiResponse> handleJsonProcessingException(JsonProcessingException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.builder()
+                        .message("Error al procesar datos JSON: " + ex.getMessage())
+                        .build());
+    }
 }
