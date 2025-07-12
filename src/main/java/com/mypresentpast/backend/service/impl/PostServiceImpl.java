@@ -49,6 +49,7 @@ public class PostServiceImpl implements PostService {
     private final MediaRepository mediaRepository;
     private final CloudinaryService cloudinaryService;
 
+    //todo: falta @Transactional
     @Override
     public ApiResponse createPost(CreatePostRequest request, List<MultipartFile> images) {
         log.info("Creando nuevo post: {}", request.getTitle());
@@ -76,13 +77,13 @@ public class PostServiceImpl implements PostService {
 
         // 4. Guardar el post primero para obtener el ID
         post = postRepository.save(post);
-        log.info("Post guardado con ID: {}", post.getId());
+        log.info("Post guardado con ID: {}", post.getId()); // todo: messageBundle
 
         // 5. Subir imágenes a Cloudinary y crear objetos Media
         if (images != null && !images.isEmpty()) {
             // Validar límite de imágenes
             if (images.size() > 5) {
-                throw new IllegalArgumentException("Máximo 5 imágenes permitidas por publicación");
+                throw new IllegalArgumentException("Máximo 5 imágenes permitidas por publicación"); // todo: messageBundle para el mensaje y cambiar a la excepción BadRequestException
             }
 
             List<Media> mediaList = new ArrayList<>();
@@ -94,8 +95,8 @@ public class PostServiceImpl implements PostService {
                     // Crear registro Media
                     Media media = Media.builder()
                         .type(MediaType.IMAGE)
-                        .url((String) uploadResult.get("url"))
-                        .cloudinaryId((String) uploadResult.get("public_id"))
+                        .url((String) uploadResult.get("url")) // todo: agregar a Constants y no harcodear
+                        .cloudinaryId((String) uploadResult.get("public_id")) // todo: agregar a Constants y no harcodear
                         .post(post)
                         .build();
 
@@ -103,18 +104,18 @@ public class PostServiceImpl implements PostService {
 
                 } catch (Exception e) {
                     log.error("Error al subir imagen {}: {}", image.getOriginalFilename(), e.getMessage());
-                    throw new RuntimeException("Error al subir imagen: " + e.getMessage());
+                    throw new RuntimeException("Error al subir imagen: " + e.getMessage()); // todo: lanzar serverInternalError (crear la excepción)
                 }
             }
 
             // Guardar todos los Media
-            mediaRepository.saveAll(mediaList);
+            mediaRepository.saveAll(mediaList); // todo: me parece que se podría guardar el post aca y se guardaría la media por la relación jpa
             post.setMedia(mediaList);
-            log.info("Se agregaron {} imágenes al post", mediaList.size());
+            log.info("Se agregaron {} imágenes al post", mediaList.size()); // todo: message bundle
         }
 
         return ApiResponse.builder()
-            .message("Publicación creada con éxito")
+            .message("Publicación creada con éxito") // todo: message bundle
             .build();
     }
 
@@ -124,11 +125,12 @@ public class PostServiceImpl implements PostService {
      */
     private Location findOrCreateLocation(Double latitude, Double longitude, String address) {
         // Buscar ubicaciones existentes dentro de un rango de proximidad
+        // todo: cambiar a optional porque parece ser que siempre agarramos el primer elemento de la lista.
         List<Location> existingLocations = locationRepository.findLocationsByProximity(latitude, longitude);
 
         if (!existingLocations.isEmpty()) {
             Location existingLocation = existingLocations.get(0);
-            log.info("Reutilizando ubicación existente: {} (ID: {})",
+            log.info("Reutilizando ubicación existente: {} (ID: {})", // todo: agregar a MessageBundle
                 existingLocation.getAddress(), existingLocation.getId());
             return existingLocation;
         }
