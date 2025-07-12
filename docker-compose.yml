@@ -8,7 +8,7 @@ services:
       - "8081:8081"
     environment:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      DB_HOST: ${DB_HOST}
+      DB_HOST: db # en local se usa localhost, pero en docker tenemos que hacer referencia al contenedor de postgres
       DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
@@ -20,7 +20,6 @@ services:
   db:
     image: postgres:16
     container_name: spring-db
-    restart: always
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}

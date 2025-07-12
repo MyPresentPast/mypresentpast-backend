@@ -26,19 +26,19 @@ public class User implements UserDetails {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    String profileUsername;
+    private String profileUsername;
 
     @NotBlank()
     @Column(nullable = false)
     private String password;
 
     @Column(nullable = false, unique = true)
-    String email;
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    UserRole role = UserRole.NORMAL;
+    private UserRole role = UserRole.NORMAL;
 
     @Column
     private String avatar;
