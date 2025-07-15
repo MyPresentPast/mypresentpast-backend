@@ -49,12 +49,14 @@ public interface PostController {
      * Endpoint principal del mapa con filtros.
      * Devuelve todos los posts en el área especificada.
      *
-     * @param latMin   latitud mínima del área visible del mapa
-     * @param latMax   latitud máxima del área visible del mapa
-     * @param lonMin   longitud mínima del área visible del mapa
-     * @param lonMax   longitud máxima del área visible del mapa
-     * @param category filtro por categoría (PostType: STORY, INFORMATION, MYTH)
-     * @param date     fecha exacta del slider temporal (ej: "2006-07-09")
+     * @param latMin     latitud mínima del área visible del mapa
+     * @param latMax     latitud máxima del área visible del mapa
+     * @param lonMin     longitud mínima del área visible del mapa
+     * @param lonMax     longitud máxima del área visible del mapa
+     * @param category   filtro por categoría (PostType: STORY, INFORMATION, MYTH)
+     * @param date       fecha exacta del slider temporal (ej: "2006-07-09")
+     * @param isVerified filtro por publicaciones verificadas (true/false)
+     * @param isByIA     filtro por publicaciones creadas con IA (true/false)
      * @return lista completa de posts en el área
      */
     @GetMapping("/map")
@@ -64,7 +66,9 @@ public interface PostController {
         @RequestParam double lonMin,
         @RequestParam double lonMax,
         @RequestParam(required = false) String category,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+        @RequestParam(required = false) Boolean isVerified,
+        @RequestParam(required = false) Boolean isByIA
     );
 
     /**
