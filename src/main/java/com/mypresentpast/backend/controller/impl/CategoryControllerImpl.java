@@ -5,7 +5,6 @@ import com.mypresentpast.backend.service.CategoryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class CategoryControllerImpl implements CategoryController {
 
     private final CategoryService categoryService;
