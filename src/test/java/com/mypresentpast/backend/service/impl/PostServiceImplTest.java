@@ -19,11 +19,11 @@ import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.dto.request.UpdatePostRequest;
 import com.mypresentpast.backend.enums.Category;
 import com.mypresentpast.backend.enums.PostStatus;
-import com.mypresentpast.backend.enums.UserRol;
 import com.mypresentpast.backend.exception.ResourceNotFoundException;
 import com.mypresentpast.backend.model.Location;
 import com.mypresentpast.backend.model.Post;
 import com.mypresentpast.backend.model.User;
+import com.mypresentpast.backend.model.UserRole;
 import com.mypresentpast.backend.repository.LocationRepository;
 import com.mypresentpast.backend.repository.MediaRepository;
 import com.mypresentpast.backend.repository.PostRepository;
@@ -78,9 +78,9 @@ class PostServiceImplTest {
     void setUp() {
         testUser = User.builder()
             .id(1L)
-            .name("Test User")
+//            .name("Test User")
             .password("password")
-            .type(UserRol.NORMAL)
+            .role(UserRole.NORMAL)
             .build();
 
         testLocation = Location.builder()
@@ -231,7 +231,7 @@ class PostServiceImplTest {
         assertNotNull(response);
         assertEquals("Test Post", response.getTitle());
         assertEquals("Test Content", response.getContent());
-        assertEquals(testUser.getName(), response.getAuthor().getName());
+        assertEquals(testUser.getUsername(), response.getAuthor().getName());
         verify(postRepository).findById(1L);
     }
 
@@ -376,4 +376,4 @@ class PostServiceImplTest {
         // Verificar que el status cambió a DELETED
         assertEquals(PostStatus.DELETED, testPost.getStatus());
     }
-} 
+}
