@@ -157,7 +157,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date) {
+    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date, Boolean isVerified, Boolean isByIA) {
 
         // 1. Convertir category string a Category enum
         Category categoryEnum = null;
@@ -173,11 +173,11 @@ public class PostServiceImpl implements PostService {
         // 2. Usar una sola query elegante con filtros opcionales
         String categoryString = (categoryEnum != null) ? categoryEnum.name() : "";
         List<Post> posts = postRepository.findPostsInAreaWithFilters(
-            latMin, latMax, lonMin, lonMax, categoryString, date
+            latMin, latMax, lonMin, lonMax, categoryString, date, isVerified, isByIA
         );
 
-        log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, date={}",
-            posts.size(), latMin, lonMin, latMax, lonMax, category, date);
+        log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, date={}, isVerified={}, isByIA={}",
+            posts.size(), latMin, lonMin, latMax, lonMax, category, date, isVerified, isByIA);
 
         // 3. Convertir a DTOs
         List<PostResponse> postResponses = posts.stream()
@@ -209,8 +209,6 @@ public class PostServiceImpl implements PostService {
 
         return mapToPostResponse(randomPost);
     }
-
-
 
     @Override
     public ApiResponse updatePost(Long id, UpdatePostRequest request, List<MultipartFile> newImages) {
