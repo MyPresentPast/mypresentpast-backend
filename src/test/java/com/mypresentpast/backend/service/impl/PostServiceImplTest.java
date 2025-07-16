@@ -468,9 +468,9 @@ class PostServiceImplTest {
         Media testMedia = new Media();
         testMedia.setId(1L);
         testMedia.setCloudinaryId("test123");
-        
+
         testPost.setMedia(new ArrayList<>(Arrays.asList(testMedia)));
-        
+
         Map<String, Object> deleteResult = new HashMap<>();
         deleteResult.put("result", "ok");
 
@@ -510,13 +510,13 @@ class PostServiceImplTest {
     void addPostMedia_ExceedsLimit_ThrowsException() {
         // Given
         List<String> imageUrls = Arrays.asList("url1", "url2");
-        
+
         // Crear media existente manualmente
         Media media1 = new Media();
         Media media2 = new Media();
         Media media3 = new Media();
         Media media4 = new Media();
-        
+
         List<Media> existingMedia = Arrays.asList(media1, media2, media3, media4); // 4 existentes
         testPost.setMedia(existingMedia);
 
@@ -528,7 +528,7 @@ class PostServiceImplTest {
             () -> postService.addPostMedia(1L, imageUrls)
         );
 
-        assertEquals("No se pueden agregar más imágenes. Límite máximo: 5 imágenes por publicación", 
+        assertEquals("No se pueden agregar más imágenes. Límite máximo: 5 imágenes por publicación",
                      exception.getMessage());
     }
-} 
+}

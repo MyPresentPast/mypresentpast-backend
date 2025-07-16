@@ -38,4 +38,4 @@ class PostControllerIntegrationTest {
         assert postRepository != null;
         assert mockMvc != null;
     }
-} 
+}
