@@ -35,16 +35,18 @@ public interface PostService {
      * Obtener datos para el mapa con filtros.
      * Devuelve todos los posts en el área especificada.
      *
-     * @param latMin   latitud mínima del área visible del mapa
-     * @param latMax   latitud máxima del área visible del mapa
-     * @param lonMin   longitud mínima del área visible del mapa
-     * @param lonMax   longitud máxima del área visible del mapa
-     * @param category filtro por categoría (PostType)
-     * @param date     fecha exacta del slider temporal
+     * @param latMin     latitud mínima del área visible del mapa
+     * @param latMax     latitud máxima del área visible del mapa
+     * @param lonMin     longitud mínima del área visible del mapa
+     * @param lonMax     longitud máxima del área visible del mapa
+     * @param category   filtro por categoría (PostType)
+     * @param date       fecha exacta del slider temporal
+     * @param isVerified filtro por publicaciones verificadas
+     * @param isByIA     filtro por publicaciones creadas con IA
      * @return lista completa de posts en el área
      */
     MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax,
-                           String category, LocalDate date);
+                           String category, LocalDate date, Boolean isVerified, Boolean isByIA);
 
     /**
      * Obtener una publicación aleatoria.

@@ -14,7 +14,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PostControllerImpl implements PostController {
 
     private final PostService postService;
@@ -45,7 +43,7 @@ public class PostControllerImpl implements PostController {
     @Override
     public ResponseEntity<MapResponse> getMapData(
         double latMin, double latMax, double lonMin, double lonMax,
-        String category, LocalDate date) {
+        String category, LocalDate date, Boolean isVerified, Boolean isByIA) {
 
         if (date != null && date.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("No se pueden consultar fechas futuras");
@@ -53,7 +51,7 @@ public class PostControllerImpl implements PostController {
 
         MapResponse response = postService.getMapData(
             latMin, latMax, lonMin, lonMax,
-            category, date
+            category, date, isVerified, isByIA
         );
         return ResponseEntity.ok(response);
     }

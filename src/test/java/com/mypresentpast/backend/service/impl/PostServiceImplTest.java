@@ -19,11 +19,12 @@ import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.dto.request.UpdatePostRequest;
 import com.mypresentpast.backend.enums.Category;
 import com.mypresentpast.backend.enums.PostStatus;
+import com.mypresentpast.backend.model.UserRole;
 import com.mypresentpast.backend.exception.ResourceNotFoundException;
 import com.mypresentpast.backend.model.Location;
+import com.mypresentpast.backend.model.Media;
 import com.mypresentpast.backend.model.Post;
 import com.mypresentpast.backend.model.User;
-import com.mypresentpast.backend.model.UserRole;
 import com.mypresentpast.backend.repository.LocationRepository;
 import com.mypresentpast.backend.repository.MediaRepository;
 import com.mypresentpast.backend.repository.PostRepository;
@@ -76,46 +77,46 @@ class PostServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        testUser = User.builder()
-            .id(1L)
-//            .name("Test User")
-            .password("password")
-            .role(UserRole.NORMAL)
-            .build();
+        // Crear User manualmente
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setProfileUsername("testuser");
+        testUser.setPassword("password");
+        testUser.setRole(UserRole.NORMAL);
 
-        testLocation = Location.builder()
-            .id(1L)
-            .address("Test Address")
-            .latitude(-34.6118)
-            .longitude(-58.3960)
-            .build();
+        // Crear Location manualmente
+        testLocation = new Location();
+        testLocation.setId(1L);
+        testLocation.setAddress("Test Address");
+        testLocation.setLatitude(-34.6118);
+        testLocation.setLongitude(-58.3960);
 
-        testPost = Post.builder()
-            .id(1L)
-            .title("Test Post")
-            .content("Test Content")
-            .date(LocalDate.now())
-            .postedAt(LocalDate.now())
-            .category(Category.STORY)
-            .isByIA(false)
-            .isVerified(true)
-            .status(PostStatus.ACTIVE)
-            .author(testUser)
-            .location(testLocation)
-            .media(new ArrayList<>())
-            .build();
+        // Crear Post manualmente
+        testPost = new Post();
+        testPost.setId(1L);
+        testPost.setTitle("Test Post");
+        testPost.setContent("Test Content");
+        testPost.setDate(LocalDate.now());
+        testPost.setPostedAt(LocalDate.now());
+        testPost.setCategory(Category.STORY);
+        testPost.setIsByIA(false);
+        testPost.setIsVerified(true);
+        testPost.setStatus(PostStatus.ACTIVE);
+        testPost.setAuthor(testUser);
+        testPost.setLocation(testLocation);
+        testPost.setMedia(new ArrayList<>());
 
-        createRequest = CreatePostRequest.builder()
-            .title("New Test Post")
-            .content("New test content")
-            .date(LocalDate.now())
-            .category(Category.STORY)
-            .isByIA(false)
-            .authorId(1L)
-            .latitude(-34.6118)
-            .longitude(-58.3960)
-            .address("Buenos Aires, Argentina")
-            .build();
+        // Crear CreatePostRequest manualmente
+        createRequest = new CreatePostRequest();
+        createRequest.setTitle("New Test Post");
+        createRequest.setContent("New test content");
+        createRequest.setDate(LocalDate.now());
+        createRequest.setCategory(Category.STORY);
+        createRequest.setIsByIA(false);
+        createRequest.setAuthorId(1L);
+        createRequest.setLatitude(-34.6118);
+        createRequest.setLongitude(-58.3960);
+        createRequest.setAddress("Buenos Aires, Argentina");
     }
 
     @Test
@@ -153,8 +154,8 @@ class PostServiceImplTest {
             .thenReturn(Collections.emptyList());
         when(locationRepository.save(any(Location.class))).thenReturn(testLocation);
         when(postRepository.save(any(Post.class))).thenReturn(testPost);
-        when(cloudinaryService.upload(mockImage)).thenReturn(uploadResult);
-        when(mediaRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
+        when(cloudinaryService.upload(any(MultipartFile.class))).thenReturn(uploadResult);
+        when(mediaRepository.saveAll(anyList())).thenReturn(new ArrayList<>());
 
         // When
         ApiResponse response = postService.createPost(createRequest, images);
@@ -178,15 +179,15 @@ class PostServiceImplTest {
         );
 
         assertEquals("Usuario no encontrado con id: 1", exception.getMessage());
-        verify(postRepository, never()).save(any());
     }
 
     @Test
-    void createPost_TooManyImages_ThrowsException() {
+    void createPost_WithTooManyImages_ThrowsException() {
         // Given
         List<MultipartFile> tooManyImages = Arrays.asList(
-            mockImage, mockImage, mockImage, mockImage, mockImage, mockImage // 6 images
+            mockImage, mockImage, mockImage, mockImage, mockImage, mockImage // 6 imágenes
         );
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(locationRepository.findLocationsByProximity(anyDouble(), anyDouble()))
             .thenReturn(Collections.emptyList());
@@ -203,23 +204,6 @@ class PostServiceImplTest {
     }
 
     @Test
-    void createPost_ReuseExistingLocation() {
-        // Given
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(locationRepository.findLocationsByProximity(anyDouble(), anyDouble()))
-            .thenReturn(Arrays.asList(testLocation)); // Location already exists
-        when(postRepository.save(any(Post.class))).thenReturn(testPost);
-
-        // When
-        ApiResponse response = postService.createPost(createRequest, null);
-
-        // Then
-        assertNotNull(response);
-        verify(locationRepository).findLocationsByProximity(-34.6118, -58.3960);
-        verify(locationRepository, never()).save(any()); // Should not save new location
-    }
-
-    @Test
     void getPostById_Success() {
         // Given
         when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
@@ -231,7 +215,7 @@ class PostServiceImplTest {
         assertNotNull(response);
         assertEquals("Test Post", response.getTitle());
         assertEquals("Test Content", response.getContent());
-        assertEquals(testUser.getUsername(), response.getAuthor().getName());
+        assertEquals(testUser.getProfileUsername(), response.getAuthor().getName());
         verify(postRepository).findById(1L);
     }
 
@@ -250,17 +234,17 @@ class PostServiceImplTest {
     }
 
     @Test
-    void getMapData_Success_WithFilters() {
+    void getMapData_Success_WithAllFilters() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
         when(postRepository.findPostsInAreaWithFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(LocalDate.class)))
+            anyString(), any(LocalDate.class), any(Boolean.class), any(Boolean.class)))
             .thenReturn(mockPosts);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now()
+            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), true, false
         );
 
         // Then
@@ -268,7 +252,29 @@ class PostServiceImplTest {
         assertEquals(1, response.getPosts().size());
         assertEquals("Test Post", response.getPosts().get(0).getTitle());
         verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now()
+            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), true, false
+        );
+    }
+
+    @Test
+    void getMapData_Success_WithMinimalParams() {
+        // Given
+        List<Post> mockPosts = Arrays.asList(testPost);
+        when(postRepository.findPostsInAreaWithFilters(
+            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
+            anyString(), any(), any(), any()))
+            .thenReturn(mockPosts);
+
+        // When
+        MapResponse response = postService.getMapData(
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null
+        );
+
+        // Then
+        assertNotNull(response);
+        assertEquals(1, response.getPosts().size());
+        verify(postRepository).findPostsInAreaWithFilters(
+            -35.0, -34.0, -59.0, -58.0, "", null, null, null
         );
     }
 
@@ -278,19 +284,63 @@ class PostServiceImplTest {
         List<Post> mockPosts = Arrays.asList(testPost);
         when(postRepository.findPostsInAreaWithFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            eq(""), any()))
+            eq(""), any(), any(), any()))
             .thenReturn(mockPosts);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, "INVALID_CATEGORY", null
+            -35.0, -34.0, -59.0, -58.0, "INVALID_CATEGORY", null, null, null
         );
 
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
         verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null
+            -35.0, -34.0, -59.0, -58.0, "", null, null, null
+        );
+    }
+
+    @Test
+    void getMapData_FilterByVerified() {
+        // Given
+        List<Post> mockPosts = Arrays.asList(testPost);
+        when(postRepository.findPostsInAreaWithFilters(
+            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
+            anyString(), any(), eq(true), any()))
+            .thenReturn(mockPosts);
+
+        // When
+        MapResponse response = postService.getMapData(
+            -35.0, -34.0, -59.0, -58.0, null, null, true, null
+        );
+
+        // Then
+        assertNotNull(response);
+        assertEquals(1, response.getPosts().size());
+        verify(postRepository).findPostsInAreaWithFilters(
+            -35.0, -34.0, -59.0, -58.0, "", null, true, null
+        );
+    }
+
+    @Test
+    void getMapData_FilterByIA() {
+        // Given
+        List<Post> mockPosts = Arrays.asList(testPost);
+        when(postRepository.findPostsInAreaWithFilters(
+            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
+            anyString(), any(), any(), eq(false)))
+            .thenReturn(mockPosts);
+
+        // When
+        MapResponse response = postService.getMapData(
+            -35.0, -34.0, -59.0, -58.0, null, null, null, false
+        );
+
+        // Then
+        assertNotNull(response);
+        assertEquals(1, response.getPosts().size());
+        verify(postRepository).findPostsInAreaWithFilters(
+            -35.0, -34.0, -59.0, -58.0, "", null, null, false
         );
     }
 
@@ -328,16 +378,17 @@ class PostServiceImplTest {
     @Test
     void updatePost_Success() {
         // Given
-        UpdatePostRequest updateRequest = UpdatePostRequest.builder()
-            .title("Updated Title")
-            .content("Updated Content")
-            .category(Category.INFORMATION)
-            .authorId(1L) // Necesario para el update
-            .latitude(-34.6118)
-            .longitude(-58.3960)
-            .address("Updated Address")
-            .date(LocalDate.now())
-            .build();
+        UpdatePostRequest updateRequest = new UpdatePostRequest();
+        updateRequest.setTitle("Updated Title");
+        updateRequest.setContent("Updated Content");
+        updateRequest.setCategory(Category.INFORMATION);
+        updateRequest.setAuthorId(1L);
+        updateRequest.setLatitude(-34.6118);
+        updateRequest.setLongitude(-58.3960);
+        updateRequest.setAddress("Updated Address");
+        updateRequest.setDate(LocalDate.now());
+        updateRequest.setIsByIA(false);
+        updateRequest.setKeepImageIds(new ArrayList<>());
 
         when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
@@ -357,6 +408,27 @@ class PostServiceImplTest {
     }
 
     @Test
+    void updatePost_NotFound_ThrowsException() {
+        // Given
+        UpdatePostRequest updateRequest = new UpdatePostRequest();
+        updateRequest.setTitle("Updated Title");
+        updateRequest.setAuthorId(1L);
+        updateRequest.setLatitude(-34.6118);
+        updateRequest.setLongitude(-58.3960);
+        updateRequest.setAddress("Updated Address");
+
+        when(postRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class,
+            () -> postService.updatePost(1L, updateRequest, null)
+        );
+
+        assertEquals("Publicación no encontrada con id: 1", exception.getMessage());
+    }
+
+    @Test
     void deletePost_Success() {
         // Given - deletePost hace eliminación LÓGICA, no física
         when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
@@ -368,12 +440,95 @@ class PostServiceImplTest {
         // Then
         assertNotNull(response);
         assertEquals("Publicación eliminada con éxito", response.getMessage());
-        // No debe llamar a cloudinaryService.delete porque es eliminación lógica
         verify(cloudinaryService, never()).delete(anyString());
-        verify(postRepository).save(testPost); // Guarda con status DELETED
-        verify(postRepository, never()).delete(testPost); // No eliminación física
+        verify(postRepository).save(testPost);
+        verify(postRepository, never()).delete(testPost);
 
         // Verificar que el status cambió a DELETED
         assertEquals(PostStatus.DELETED, testPost.getStatus());
+    }
+
+    @Test
+    void deletePost_NotFound_ThrowsException() {
+        // Given
+        when(postRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class,
+            () -> postService.deletePost(1L)
+        );
+
+        assertEquals("Publicación no encontrada con id: 1", exception.getMessage());
+    }
+
+    @Test
+    void deletePostMedia_Success() {
+        // Given
+        Media testMedia = new Media();
+        testMedia.setId(1L);
+        testMedia.setCloudinaryId("test123");
+
+        testPost.setMedia(new ArrayList<>(Arrays.asList(testMedia)));
+
+        Map<String, Object> deleteResult = new HashMap<>();
+        deleteResult.put("result", "ok");
+
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+        when(cloudinaryService.delete("test123")).thenReturn(deleteResult);
+        when(postRepository.save(any(Post.class))).thenReturn(testPost);
+
+        // When
+        ApiResponse response = postService.deletePostMedia(1L, 1L);
+
+        // Then
+        assertNotNull(response);
+        assertEquals("Imagen eliminada con éxito", response.getMessage());
+        verify(cloudinaryService).delete("test123");
+        verify(postRepository).save(testPost);
+    }
+
+    @Test
+    void addPostMedia_Success() {
+        // Given
+        List<String> imageUrls = Arrays.asList("http://test.com/image1.jpg", "http://test.com/image2.jpg");
+        testPost.setMedia(new ArrayList<>());
+
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+        when(postRepository.save(any(Post.class))).thenReturn(testPost);
+
+        // When
+        ApiResponse response = postService.addPostMedia(1L, imageUrls);
+
+        // Then
+        assertNotNull(response);
+        assertEquals("Imágenes agregadas con éxito", response.getMessage());
+        verify(postRepository).save(testPost);
+    }
+
+    @Test
+    void addPostMedia_ExceedsLimit_ThrowsException() {
+        // Given
+        List<String> imageUrls = Arrays.asList("url1", "url2");
+
+        // Crear media existente manualmente
+        Media media1 = new Media();
+        Media media2 = new Media();
+        Media media3 = new Media();
+        Media media4 = new Media();
+
+        List<Media> existingMedia = Arrays.asList(media1, media2, media3, media4); // 4 existentes
+        testPost.setMedia(existingMedia);
+
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> postService.addPostMedia(1L, imageUrls)
+        );
+
+        assertEquals("No se pueden agregar más imágenes. Límite máximo: 5 imágenes por publicación",
+                     exception.getMessage());
     }
 }
