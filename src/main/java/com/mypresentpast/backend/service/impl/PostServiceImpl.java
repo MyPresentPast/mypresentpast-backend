@@ -156,6 +156,23 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public List<PostResponse> getPostsByUser(final Long id) {
+        List<Post> posts = postRepository.findByAuthorId(id);
+
+        if (posts.isEmpty()) {
+            throw new ResourceNotFoundException("No hay publicaciones disponibles para mostrar");
+        }
+
+        List<PostResponse> postResponses = new ArrayList<>();
+
+        for (Post post : posts) {
+            postResponses.add(mapToPostResponse(post));
+        }
+
+        return postResponses;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date, Boolean isVerified, Boolean isByIA) {
 

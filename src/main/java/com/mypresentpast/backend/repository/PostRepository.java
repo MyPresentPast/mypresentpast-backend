@@ -45,4 +45,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * Busca posts activos que tengan ubicación para el endpoint random.
      */
     List<Post> findByStatusAndLocationIsNotNull(PostStatus status);
+
+    /**
+     * Busca posts por usuario.
+     */
+    List<Post> findByAuthorId(Long id);
 }
