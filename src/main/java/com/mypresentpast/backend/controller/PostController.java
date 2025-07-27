@@ -46,6 +46,15 @@ public interface PostController {
     ResponseEntity<PostResponse> getPostById(@PathVariable Long id);
 
     /**
+     * Obtener publicaciones por usuario.
+     *
+     * @param id el ID del usuario
+     * @return las publicaciones encontradas
+     */
+    @GetMapping("/user/{id}")
+    ResponseEntity<List<PostResponse>> getPostsByUser(@PathVariable Long id);
+
+    /**
      * Endpoint principal del mapa con filtros.
      * Devuelve todos los posts en el área especificada.
      *

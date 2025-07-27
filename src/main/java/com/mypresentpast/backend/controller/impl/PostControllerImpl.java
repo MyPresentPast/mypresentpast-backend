@@ -41,6 +41,12 @@ public class PostControllerImpl implements PostController {
     }
 
     @Override
+    public ResponseEntity<List<PostResponse>> getPostsByUser(final Long id) {
+        List<PostResponse> response = postService.getPostsByUser(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
     public ResponseEntity<MapResponse> getMapData(
         double latMin, double latMax, double lonMin, double lonMax,
         String category, LocalDate date, Boolean isVerified, Boolean isByIA) {

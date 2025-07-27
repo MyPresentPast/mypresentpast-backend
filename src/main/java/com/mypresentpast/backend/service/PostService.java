@@ -32,6 +32,14 @@ public interface PostService {
     PostResponse getPostById(Long id);
 
     /**
+     * Obtener publicaciones por usuario.
+     *
+     * @param id el ID del usuario
+     * @return las publicaciones encontradas
+     */
+    List<PostResponse> getPostsByUser(Long id);
+
+    /**
      * Obtener datos para el mapa con filtros.
      * Devuelve todos los posts en el área especificada.
      *
