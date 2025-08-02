@@ -53,6 +53,8 @@ class AuthServiceImplTest {
                 .email("test@example.com")
                 .profileUsername("springmaster")
                 .password("1234")
+                .name("spring")
+                .lastName("master")
                 .build();
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
@@ -67,6 +69,8 @@ class AuthServiceImplTest {
                 .profileUsername(request.getProfileUsername())
                 .password(hashedPassword)
                 .role(UserRole.NORMAL)
+                .name(request.getName())
+                .lastName(request.getLastName())
                 .build();
 
         when(jwtService.getToken(refEq(expectedUser))).thenReturn("mocked-jwt-token");

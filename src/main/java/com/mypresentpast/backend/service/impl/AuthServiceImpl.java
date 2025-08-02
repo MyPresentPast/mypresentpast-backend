@@ -26,20 +26,36 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * Autentica al usuario usando su email y contraseña.
+     * Si la autenticación es exitosa, genera y devuelve un JWT.
+     */
     @Override
     public AuthResponse login(LoginRequest request) {
+
+        // Verifica las credenciales del usuario (lanzará una excepción si son incorrectas)
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+
+        // Recupera el usuario desde el repositorio
         UserDetails user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+
+        // Genera el token JWT
         String token = jwtService.getToken(user);
+
+        // Devuelve la respuesta con el token
         return AuthResponse
                 .builder()
                 .token(token)
                 .build();
     }
 
+    /**
+     * Registra un nuevo usuario en el sistema con rol NORMAL.
+     * Verifica que el email y el profileUsername no estén duplicados.
+     */
     @Override
     public AuthResponse register(RegisterRequest request) {
-
+        // Valida que el email y el profile username no esten registrados
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_EMAIL, request.getEmail()));
         }
@@ -48,15 +64,21 @@ public class AuthServiceImpl implements AuthService {
             throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_USERNAME, request.getProfileUsername()));
         }
 
+        // Crea el nuevo usuario con los datos del request
         User user = User
                 .builder()
                 .profileUsername(request.getProfileUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .role(UserRole.NORMAL)
+                .name(request.getName())
+                .lastName(request.getLastName())
                 .build();
 
+        // Guarda el usuario en la base de datos
         userRepository.save(user);
+
+        // Devuelve la respuesta con el token JWT generado
         return AuthResponse
                 .builder()
                 .token(jwtService.getToken(user))

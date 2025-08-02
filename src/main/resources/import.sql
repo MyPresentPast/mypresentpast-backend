@@ -6,9 +6,9 @@
 -- después de crear las tablas (import.sql)
 
 -- 1. USUARIOS
-INSERT INTO user_account (profile_username, email, password, role, avatar) VALUES ('mferradans', 'mateo@mail.com', '$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'ADMIN', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400');
-INSERT INTO user_account (profile_username, email, password, role, avatar) VALUES ('Museo Nacional Argentino','museo@mail.com', '$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'INSTITUTION', 'https://images.unsplash.com/photo-1566127992631-137a642a90f4?w=400');
-INSERT INTO user_account (profile_username, email, password, role, avatar) VALUES ('Historia Argentina', 'historia@mail.com','$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'NORMAL', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400');
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name) VALUES ('mferradans', 'mateo@mail.com', '$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'ADMIN', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400', 'Mateo', 'Ferradans');
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name) VALUES ('Museo Nacional Argentino','museo@mail.com', '$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'INSTITUTION', 'https://images.unsplash.com/photo-1566127992631-137a642a90f4?w=400', 'Museo Nacional Argentino', null);
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name) VALUES ('Historia Argentina', 'historia@mail.com','$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'NORMAL', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', 'Historia', 'Argentina');
 
 -- 2. UBICACIONES
 INSERT INTO location (address, latitude, longitude) VALUES ('Villa María, Córdoba, Argentina', -32.4075, -63.2406);
