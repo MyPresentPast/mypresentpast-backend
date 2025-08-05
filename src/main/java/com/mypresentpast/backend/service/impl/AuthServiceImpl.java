@@ -3,11 +3,13 @@ package com.mypresentpast.backend.service.impl;
 import com.mypresentpast.backend.dto.request.LoginRequest;
 import com.mypresentpast.backend.dto.request.RegisterRequest;
 import com.mypresentpast.backend.dto.response.AuthResponse;
+import com.mypresentpast.backend.exception.BadRequestException;
 import com.mypresentpast.backend.model.User;
 import com.mypresentpast.backend.model.UserRole;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.AuthService;
 import com.mypresentpast.backend.service.JwtService;
+import com.mypresentpast.backend.utils.CommonFunctions;
 import com.mypresentpast.backend.utils.MessageBundle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -55,7 +57,16 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public AuthResponse register(RegisterRequest request) {
-        // Valida que el email y el profile username no esten registrados
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException(MessageBundle.PASSWORD_MISMATCH);
+        }
+
+        if (!isValidPassword(request.getPassword())) {
+            throw new BadRequestException(MessageBundle.PASSWORD_INVALID);
+        }
+
+        // Verifica que el email y el profile username no esten registrados
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_EMAIL, request.getEmail()));
         }
@@ -64,6 +75,10 @@ public class AuthServiceImpl implements AuthService {
             throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_USERNAME, request.getProfileUsername()));
         }
 
+        // Formatea nombre y apellido en formato "Nombre Apellido"
+        String capitalizedName = CommonFunctions.formatAsTitleCase(request.getName());
+        String capitalizedLastName = CommonFunctions.formatAsTitleCase(request.getLastName());
+
         // Crea el nuevo usuario con los datos del request
         User user = User
                 .builder()
@@ -71,8 +86,8 @@ public class AuthServiceImpl implements AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .role(UserRole.NORMAL)
-                .name(request.getName())
-                .lastName(request.getLastName())
+                .name(capitalizedName)
+                .lastName(capitalizedLastName)
                 .build();
 
         // Guarda el usuario en la base de datos
@@ -84,4 +99,10 @@ public class AuthServiceImpl implements AuthService {
                 .token(jwtService.getToken(user))
                 .build();
     }
+
+    private boolean isValidPassword(String password) {
+        if (password == null) return false;
+        return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$");
+    }
+
 }
