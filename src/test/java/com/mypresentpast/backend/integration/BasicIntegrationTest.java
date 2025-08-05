@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.mypresentpast.backend.repository.LocationRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
+import com.mypresentpast.backend.service.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
@@ -22,6 +25,12 @@ class BasicIntegrationTest {
 
     @Autowired
     private LocationRepository locationRepository;
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Test
     void repositoriesAreLoaded() {
