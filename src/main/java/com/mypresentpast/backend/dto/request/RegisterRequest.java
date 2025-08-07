@@ -16,5 +16,11 @@ public class RegisterRequest {
     @NotBlank
     private String password;
     @NotBlank
+    private String confirmPassword;
+    @NotBlank
     private String email;
+    @NotBlank
+    private String name;
+    @NotBlank
+    private String lastName;
 }

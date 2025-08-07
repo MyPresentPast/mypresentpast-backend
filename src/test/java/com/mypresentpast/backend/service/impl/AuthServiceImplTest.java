@@ -52,21 +52,26 @@ class AuthServiceImplTest {
         RegisterRequest request = RegisterRequest.builder()
                 .email("test@example.com")
                 .profileUsername("springmaster")
-                .password("1234")
+                .password("Aa12345678")
+                .confirmPassword("Aa12345678")
+                .name("Spring")
+                .lastName("Master")
                 .build();
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
         when(userRepository.existsByProfileUsername(request.getProfileUsername())).thenReturn(false);
 
         // Simular hash de contraseña
-        String hashedPassword = "hashed_1234";
-        when(passwordEncoder.encode("1234")).thenReturn(hashedPassword);
+        String hashedPassword = "hashed_Aa12345678";
+        when(passwordEncoder.encode("Aa12345678")).thenReturn(hashedPassword);
 
         User expectedUser = User.builder()
                 .email(request.getEmail())
                 .profileUsername(request.getProfileUsername())
                 .password(hashedPassword)
                 .role(UserRole.NORMAL)
+                .name(request.getName())
+                .lastName(request.getLastName())
                 .build();
 
         when(jwtService.getToken(refEq(expectedUser))).thenReturn("mocked-jwt-token");
@@ -88,7 +93,10 @@ class AuthServiceImplTest {
         RegisterRequest request = RegisterRequest.builder()
                 .email("existing@mail.com")
                 .profileUsername("newuser")
-                .password("1234")
+                .name("name")
+                .lastName("lastname")
+                .password("Aa12345678")
+                .confirmPassword("Aa12345678")
                 .build();
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
@@ -108,7 +116,10 @@ class AuthServiceImplTest {
         RegisterRequest request = RegisterRequest.builder()
                 .email("new@mail.com")
                 .profileUsername("takenusername")
-                .password("1234")
+                .name("name")
+                .lastName("lastname")
+                .password("Aa12345678")
+                .confirmPassword("Aa12345678")
                 .build();
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
