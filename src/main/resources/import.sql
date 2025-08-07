@@ -66,3 +66,11 @@ INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?w=800', 9);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=800', 10);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1520637836862-4d197d17c16a?w=800', 11);
+
+-- 5. RELACIONES DE SEGUIMIENTO (FOLLOW) - Para probar el sistema
+-- Usuario 1 (mferradans) sigue al Usuario 2 (Museo Nacional)
+INSERT INTO follow (follower_id, followee_id) VALUES (1, 2);
+-- Usuario 1 (mferradans) sigue al Usuario 3 (Historia Argentina)  
+INSERT INTO follow (follower_id, followee_id) VALUES (1, 3);
+-- Usuario 2 (Museo Nacional) sigue al Usuario 3 (Historia Argentina)
+INSERT INTO follow (follower_id, followee_id) VALUES (2, 3);
