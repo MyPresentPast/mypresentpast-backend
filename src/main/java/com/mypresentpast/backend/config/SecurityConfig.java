@@ -46,7 +46,23 @@ public class SecurityConfig {
 
     // Constante donde podemos poner urls sin autenticacion
     private static final String[] AUTH_WHITELIST = {
-
+        // Health check
+        "/ping",
+        
+        // Perfiles públicos (para ver sin login)
+        "/profiles/**",
+        
+        // Posts públicos (consulta sin login)
+        "/posts/map",
+        "/posts/random", 
+        "/posts/{id}",
+        "/posts/user/{id}",
+        
+        // Categorías públicas
+        "/categories",
+        
+        // Otros endpoints públicos de consulta
+        "/follow/stats/**"
     };
 
 }
