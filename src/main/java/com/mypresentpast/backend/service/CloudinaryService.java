@@ -23,4 +23,7 @@ public interface CloudinaryService {
      * @return mapa con resultado de la eliminación
      */
     Map<String, Object> delete(String publicId);
+
+    Map<String, Object> uploadAvatar(MultipartFile file, Long userId);
+
 } 

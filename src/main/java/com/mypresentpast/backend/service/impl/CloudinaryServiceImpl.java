@@ -3,6 +3,7 @@ package com.mypresentpast.backend.service.impl;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.mypresentpast.backend.service.CloudinaryService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,21 +19,32 @@ import java.util.Map;
 public class CloudinaryServiceImpl implements CloudinaryService {
     
     private final Cloudinary cloudinary;
+
+    @Value("${cloudinary.cloud-name}")
+    private String cloudName;
+
+    @Value("${cloudinary.api-key}")
+    private String apiKey;
+
+    @Value("${cloudinary.api-secret}")
+    private String apiSecret;
     
     // Constantes para compresión y validación
     private static final int MAX_FILE_SIZE_MB = 10; // 10MB máximo
     private static final int COMPRESSED_WIDTH = 1200; // Ancho máximo comprimido
     private static final int COMPRESSED_HEIGHT = 800; // Alto máximo comprimido
     private static final int QUALITY = 80; // Calidad de compresión (80%)
+
+
     
     public CloudinaryServiceImpl() {
         this.cloudinary = new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", "dubl1j9qo",
-                "api_key", "237499953348653",
-                "api_secret", "LIRVfnkenDhLOC3OAseWb4LElmw"
+                "cloud_name", cloudName,
+                "api_key", apiKey,
+                "api_secret", apiSecret
         ));
     }
-    
+
     @Override
     public Map<String, Object> upload(MultipartFile file) {
         try {
@@ -77,7 +89,30 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             throw new RuntimeException("Error al subir imagen: " + e.getMessage());
         }
     }
-    
+
+    @Override
+    public Map<String, Object> uploadAvatar(MultipartFile file, Long userId) {
+        try {
+            validateImage(file);
+
+            String publicId = "avatars/%d/avatar".formatted(userId);
+
+            Map<String, Object> params = ObjectUtils.asMap(
+                    "public_id", publicId,
+                    "folder", "mypresentpast",
+                    "overwrite", true,
+                    "invalidate", true,
+                    "resource_type", "image",
+                    "transformation", "w_400,h_400,c_fill,g_face,q_auto:good,f_auto"
+            );
+
+            return cloudinary.uploader().upload(file.getBytes(), params);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al subir avatar: " + e.getMessage());
+        }
+    }
+
     @Override
     public Map<String, Object> delete(String publicId) {
         try {
@@ -120,5 +155,18 @@ public class CloudinaryServiceImpl implements CloudinaryService {
                 contentType.equals("image/gif") ||
                 contentType.equals("image/webp")
         );
+    }
+
+    private void validateImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("El archivo es obligatorio");
+        }
+        if (file.getSize() > MAX_FILE_SIZE_MB * 1024 * 1024) {
+            throw new IllegalArgumentException("La imagen excede el tamaño permitido");
+        }
+        String ct = file.getContentType();
+        if (ct == null || !(ct.equals("image/jpeg") || ct.equals("image/png") || ct.equals("image/webp"))) {
+            throw new IllegalArgumentException("Formato no permitido para avatar");
+        }
     }
 } 
