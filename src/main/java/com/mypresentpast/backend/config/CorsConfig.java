@@ -16,10 +16,11 @@ public class CorsConfig {
                         .addMapping("/**")
                         .allowedOrigins(
                             "http://localhost:3000",     // React
-                            "http://localhost:4200",     // Angular  
+                            "http://localhost:4200",     // Angular
                             "http://localhost:8080",     // Postman/Tests
                             "http://127.0.0.1:3000",
-                            "http://127.0.0.1:4200"
+                            "http://127.0.0.1:4200",
+                            "http://host.docker.internal:4200"
                         )
                         .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
                         .allowedHeaders("*")
