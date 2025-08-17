@@ -6,6 +6,7 @@ import com.mypresentpast.backend.exception.BadRequestException;
 import com.mypresentpast.backend.exception.CloudinaryException;
 import com.mypresentpast.backend.service.CloudinaryService;
 import com.mypresentpast.backend.utils.MessageBundle;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +19,7 @@ import java.util.Map;
 /**
  * Implementación del servicio de Cloudinary.
  */
+@Slf4j
 @Service
 public class CloudinaryServiceImpl implements CloudinaryService {
     
@@ -111,6 +113,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             return cloudinary.uploader().upload(file.getBytes(), params);
 
         } catch (Exception e) {
+            log.error("Error al subir imagen a Cloudinary para userId={}: {}", userId, e.getMessage(), e);
             // Captura cualquier error durante la carga y lanza una excepción específica con un mensaje predefinido
             throw new CloudinaryException(MessageBundle.CLOUDINARY_UPLOAD_ERROR, e);
         }
