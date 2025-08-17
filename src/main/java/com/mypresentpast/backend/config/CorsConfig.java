@@ -22,7 +22,7 @@ public class CorsConfig {
                             "http://127.0.0.1:4200",
                             "http://host.docker.internal:4200"
                         )
-                        .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+                        .allowedMethods("GET","POST","PUT","DELETE","OPTIONS","PATCH")
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }
