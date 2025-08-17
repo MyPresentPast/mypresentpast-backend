@@ -24,6 +24,15 @@ public interface CloudinaryService {
      */
     Map<String, Object> delete(String publicId);
 
+    /**
+     * Sube una imagen de avatar a Cloudinary asociada a un usuario.
+     * Puede asignar un nombre específico al archivo utilizando el ID del usuario
+     * o almacenarlo en una carpeta designada para avatares.
+     *
+     * @param file archivo de imagen del avatar
+     * @param userId ID del usuario al que se asocia la imagen
+     * @return mapa con información sobre la imagen subida
+     */
     Map<String, Object> uploadAvatar(MultipartFile file, Long userId);
 
 } 

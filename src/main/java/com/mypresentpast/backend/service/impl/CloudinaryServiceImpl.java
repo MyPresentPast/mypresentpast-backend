@@ -2,7 +2,10 @@ package com.mypresentpast.backend.service.impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.mypresentpast.backend.exception.BadRequestException;
+import com.mypresentpast.backend.exception.CloudinaryException;
 import com.mypresentpast.backend.service.CloudinaryService;
+import com.mypresentpast.backend.utils.MessageBundle;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,15 +23,6 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     
     private final Cloudinary cloudinary;
 
-    @Value("${cloudinary.cloud-name}")
-    private String cloudName;
-
-    @Value("${cloudinary.api-key}")
-    private String apiKey;
-
-    @Value("${cloudinary.api-secret}")
-    private String apiSecret;
-    
     // Constantes para compresión y validación
     private static final int MAX_FILE_SIZE_MB = 10; // 10MB máximo
     private static final int COMPRESSED_WIDTH = 1200; // Ancho máximo comprimido
@@ -36,8 +30,11 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     private static final int QUALITY = 80; // Calidad de compresión (80%)
 
 
-    
-    public CloudinaryServiceImpl() {
+    public CloudinaryServiceImpl(
+            @Value("${cloudinary.cloud-name}") String cloudName,
+            @Value("${cloudinary.api-key}") String apiKey,
+            @Value("${cloudinary.api-secret}") String apiSecret
+    ) {
         this.cloudinary = new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", cloudName,
                 "api_key", apiKey,
@@ -93,23 +90,29 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     @Override
     public Map<String, Object> uploadAvatar(MultipartFile file, Long userId) {
         try {
+            // Valida que el archivo sea una imagen válida antes de procesarlo
             validateImage(file);
 
+            // Define el identificador público para la imagen, organizándola por ID de usuario
+            // Esto permite sobreescribir fácilmente el avatar de un usuario específico
             String publicId = "avatars/%d/avatar".formatted(userId);
 
+            // Construye los parámetros necesarios para la subida a Cloudinary
+            // Se define la carpeta raíz, el nombre del archivo, y se aplican transformaciones de imagen
             Map<String, Object> params = ObjectUtils.asMap(
-                    "public_id", publicId,
-                    "folder", "mypresentpast",
-                    "overwrite", true,
-                    "invalidate", true,
-                    "resource_type", "image",
-                    "transformation", "w_400,h_400,c_fill,g_face,q_auto:good,f_auto"
+                    "public_id", publicId, // Nombre del archivo dentro de Cloudinary
+                    "folder", "mypresentpast",     // Carpeta principal donde se guardan los archivos
+                    "overwrite", true,             // Permite reemplazar el archivo si ya existe
+                    "invalidate", true,            // Invalida caché en CDN si el archivo es reemplazado
+                    "resource_type", "image",      // Especifica el tipo de recurso
+                    "transformation", "w_400,h_400,c_fill,g_face,q_auto:good,f_auto" // Redimensiona y optimiza la imagen
             );
-
+            // Realiza la carga del archivo en Cloudinary y devuelve el resultado como un mapa
             return cloudinary.uploader().upload(file.getBytes(), params);
 
         } catch (Exception e) {
-            throw new RuntimeException("Error al subir avatar: " + e.getMessage());
+            // Captura cualquier error durante la carga y lanza una excepción específica con un mensaje predefinido
+            throw new CloudinaryException(MessageBundle.CLOUDINARY_UPLOAD_ERROR, e);
         }
     }
 
@@ -158,15 +161,16 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     }
 
     private void validateImage(MultipartFile file) {
+
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("El archivo es obligatorio");
+            throw new BadRequestException(MessageBundle.AVATAR_FILE_REQUIRED);
         }
         if (file.getSize() > MAX_FILE_SIZE_MB * 1024 * 1024) {
-            throw new IllegalArgumentException("La imagen excede el tamaño permitido");
+            throw new BadRequestException(String.format(MessageBundle.AVATAR_FILE_TOO_LARGE, MAX_FILE_SIZE_MB));
         }
         String ct = file.getContentType();
         if (ct == null || !(ct.equals("image/jpeg") || ct.equals("image/png") || ct.equals("image/webp"))) {
-            throw new IllegalArgumentException("Formato no permitido para avatar");
+            throw new BadRequestException(MessageBundle.AVATAR_FILE_INVALID_TYPE);
         }
     }
 } 

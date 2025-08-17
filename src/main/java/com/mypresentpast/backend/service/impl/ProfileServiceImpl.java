@@ -218,8 +218,7 @@ public class ProfileServiceImpl implements ProfileService {
         Long userId = SecurityUtils.getCurrentUserId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        String.format(MessageBundle.USER_NOT_FOUND_WITH_ID, userId)));
+                .orElseThrow(() -> new ResourceNotFoundException(String.format(MessageBundle.USER_NOT_FOUND_WITH_ID, userId)));
 
         Map<String, Object> result = cloudinaryService.uploadAvatar(file, userId);
 
