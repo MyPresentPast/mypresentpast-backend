@@ -27,4 +27,15 @@ public class CommonFunctions {
                 .collect(Collectors.joining(" "));
     }
 
+    public static String safeTrim(String s) {
+        if (s == null) return null;
+        String v = s.trim();
+        return v.isEmpty() ? null : v;
+    }
+
+    public static boolean isValidPassword(String password) {
+        if (password == null) return false;
+        return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$");
+    }
+
 }
