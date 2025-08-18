@@ -69,6 +69,7 @@ public class ProfileServiceImpl implements ProfileService {
             .profileUsername(user.getProfileUsername())
             .name(user.getName())
             .lastName(user.getLastName())
+            .email(isSelf ? user.getEmail() : null) // Solo incluir email si es perfil propio
             .avatarUrl(user.getAvatar())
             .userType(user.getRole())
             .isSelf(isSelf)

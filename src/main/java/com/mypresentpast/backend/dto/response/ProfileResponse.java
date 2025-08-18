@@ -18,6 +18,7 @@ public class ProfileResponse {
     private String profileUsername;
     private String name;
     private String lastName;
+    private String email;
     private String avatarUrl;
     private UserRole userType;
     private Boolean isSelf;
