@@ -8,6 +8,7 @@ import com.mypresentpast.backend.repository.FollowRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
+import com.mypresentpast.backend.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -19,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +35,8 @@ class ProfileServiceImplTest {
     private PostRepository postRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
@@ -70,6 +72,7 @@ class ProfileServiceImplTest {
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
             when(userRepository.save(userCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
 
+            when(jwtService.getToken(userCaptor.capture())).thenReturn("nuevoJwtToken");
             // Act
             ProfileUpdateResponse response = systemUnderTest.updateProfile(request);
 
@@ -87,21 +90,6 @@ class ProfileServiceImplTest {
             assertEquals("John", savedUser.getName());
             assertEquals("Doe", savedUser.getLastName());
         }
-    }
-
-    @Test
-    void updateProfile_duplicateEmail_throwsException() {
-        // Arrange
-        ProfileUpdateRequest request = ProfileUpdateRequest.builder()
-                .email("duplicate@email.com")
-                .build();
-
-        User existingUser = User.builder()
-                .id(20L)
-                .email("old@email.com")
-                .profileUsername("user")
-                .build();
-
     }
 
     @Test
@@ -252,7 +240,7 @@ class ProfileServiceImplTest {
         try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> securityUtilsMock = Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
             securityUtilsMock.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId).thenReturn(userId);
 
-            when(userRepository.findById(eq(userId))).thenReturn(Optional.of(user));
+            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
             // Mock CloudinaryService
             CloudinaryService cloudinaryService = Mockito.mock(CloudinaryService.class);
@@ -262,7 +250,7 @@ class ProfileServiceImplTest {
             field.setAccessible(true);
             field.set(systemUnderTest, cloudinaryService);
 
-            when(cloudinaryService.uploadAvatar(eq(file), eq(userId))).thenReturn(uploadResult);
+            when(cloudinaryService.uploadAvatar(file, userId)).thenReturn(uploadResult);
 
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
             when(userRepository.save(userCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -275,7 +263,7 @@ class ProfileServiceImplTest {
             User savedUser = userCaptor.getValue();
             assertEquals("https://cloudinary.com/avatar.jpg", savedUser.getAvatar());
 
-            verify(cloudinaryService).uploadAvatar(eq(file), eq(userId));
+            verify(cloudinaryService).uploadAvatar(file, userId);
             verify(userRepository).save(userCaptor.getValue());
         } catch (Exception e) {
             fail("Exception thrown: " + e.getMessage());
@@ -291,7 +279,7 @@ class ProfileServiceImplTest {
         try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> securityUtilsMock = Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
             securityUtilsMock.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId).thenReturn(userId);
 
-            when(userRepository.findById(eq(userId))).thenReturn(Optional.empty());
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
             // Act & Assert
             assertThrows(com.mypresentpast.backend.exception.ResourceNotFoundException.class, () -> {

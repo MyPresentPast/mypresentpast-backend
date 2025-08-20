@@ -15,4 +15,5 @@ public class ProfileUpdateResponse {
     private String email;
     private String name;
     private String lastName;
+    private String token;
 }

@@ -13,6 +13,7 @@ import com.mypresentpast.backend.repository.FollowRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
+import com.mypresentpast.backend.service.JwtService;
 import com.mypresentpast.backend.service.ProfileService;
 import com.mypresentpast.backend.utils.CommonFunctions;
 import com.mypresentpast.backend.utils.MessageBundle;
@@ -42,6 +43,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final PostRepository postRepository;
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
+    private final JwtService jwtService;
 
     @Override
     @Transactional(readOnly = true)
@@ -114,13 +116,18 @@ public class ProfileServiceImpl implements ProfileService {
         // Persistir cambios
         User saved = userRepository.save(user);
 
+        // Genera token jwt
+        String token = jwtService.getToken(saved);
+
+
         // Mapear a DTO de salida
         return new ProfileUpdateResponse(
                 saved.getId(),
                 saved.getProfileUsername(),
                 saved.getEmail(),
                 saved.getName(),
-                saved.getLastName()
+                saved.getLastName(),
+                token
         );
 
     }
