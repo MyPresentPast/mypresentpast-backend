@@ -54,6 +54,25 @@ public interface FollowController {
     ResponseEntity<List<UserDto>> getMyFollowers();
 
     /**
+     * Obtener la lista de usuarios que sigue un usuario específico.
+     *
+     * @param userId identificador del usuario
+     * @return lista de usuarios seguidos por el usuario indicado
+     */
+    @GetMapping("/{userId}/following")
+    ResponseEntity<List<UserDto>> getFollowingByUserId(@PathVariable Long userId);
+
+    /**
+     * Obtener la lista de seguidores de un usuario específico.
+     *
+     * @param userId identificador del usuario
+     * @return lista de usuarios que siguen al usuario indicado
+     */
+    @GetMapping("/{userId}/followers")
+    ResponseEntity<List<UserDto>> getFollowersByUserId(@PathVariable Long userId);
+
+
+    /**
      * Verificar si el usuario actual sigue a otro usuario.
      * 
      * @param userId ID del usuario a verificar
