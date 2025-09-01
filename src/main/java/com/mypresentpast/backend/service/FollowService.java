@@ -42,6 +42,22 @@ public interface FollowService {
      */
     List<UserDto> getMyFollowers();
 
+
+    /**
+     * Obtener los usuarios que sigue un usuario específico.
+     *
+     * @param userId identificador del usuario
+     */
+    List<UserDto> getFollowingByUserId(Long userId);
+
+    /**
+     * Obtener los seguidores de un usuario específico.
+     *
+     * @param userId identificador del usuario
+     */
+    List<UserDto> getFollowersByUserId(Long userId);
+
+
     /**
      * Verificar si el usuario actual sigue a otro usuario.
      * 

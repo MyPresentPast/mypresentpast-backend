@@ -114,6 +114,24 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
+    public List<UserDto> getFollowingByUserId(Long userId) {
+        List<User> following = followRepository.findFollowingByUserId(userId);
+        return following.stream()
+                .map(this::mapToUserDto)
+                .toList();
+    }
+
+    @Override
+    public List<UserDto> getFollowersByUserId(Long userId) {
+        List<User> followers = followRepository.findFollowersByUserId(userId);
+        return followers.stream()
+                .map(this::mapToUserDto)
+                .toList();
+    }
+
+
+
+    @Override
     @Transactional(readOnly = true)
     public Boolean isFollowing(Long userId) {
         Long currentUserId = SecurityUtils.getCurrentUserId();

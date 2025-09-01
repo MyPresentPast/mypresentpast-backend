@@ -44,6 +44,19 @@ public class FollowControllerImpl implements FollowController {
     }
 
     @Override
+    public ResponseEntity<List<UserDto>> getFollowingByUserId(Long userId) {
+        List<UserDto> following = followService.getFollowingByUserId(userId);
+        return ResponseEntity.ok(following);
+
+    }
+
+    @Override
+    public ResponseEntity<List<UserDto>> getFollowersByUserId(Long userId) {
+        List<UserDto> followers = followService.getFollowersByUserId(userId);
+        return ResponseEntity.ok(followers);
+    }
+
+    @Override
     public ResponseEntity<Boolean> isFollowing(Long userId) {
         Boolean isFollowing = followService.isFollowing(userId);
         return ResponseEntity.ok(isFollowing);
