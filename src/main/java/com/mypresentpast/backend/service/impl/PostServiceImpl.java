@@ -306,6 +306,7 @@ public class PostServiceImpl implements PostService {
                         .type(MediaType.IMAGE)
                         .url((String) uploadResult.get("url"))
                         .cloudinaryId((String) uploadResult.get("public_id"))
+                        .post(existingPost)
                         .build();
 
                     // Agregar a la colección existente
