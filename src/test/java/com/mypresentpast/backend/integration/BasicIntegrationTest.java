@@ -2,6 +2,8 @@ package com.mypresentpast.backend.integration;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.mypresentpast.backend.repository.CollectionPostRepository;
+import com.mypresentpast.backend.repository.CollectionRepository;
 import com.mypresentpast.backend.repository.LocationRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
@@ -26,6 +28,12 @@ class BasicIntegrationTest {
     @Autowired
     private LocationRepository locationRepository;
 
+    @Autowired
+    private CollectionRepository collectionRepository;
+
+    @Autowired
+    private CollectionPostRepository collectionPostRepository;
+
     @MockBean
     private JwtService jwtService;
 
@@ -38,6 +46,8 @@ class BasicIntegrationTest {
         assertNotNull(postRepository);
         assertNotNull(userRepository);
         assertNotNull(locationRepository);
+        assertNotNull(collectionRepository);
+        assertNotNull(collectionPostRepository);
     }
 
     @Test
@@ -65,5 +75,23 @@ class BasicIntegrationTest {
 
         // Then
         assertNotNull(locations);
+    }
+
+    @Test
+    void collectionRepository_canFindAll() {
+        // When
+        var collections = collectionRepository.findAll();
+
+        // Then
+        assertNotNull(collections);
+    }
+
+    @Test
+    void collectionPostRepository_canFindAll() {
+        // When
+        var collectionPosts = collectionPostRepository.findAll();
+
+        // Then
+        assertNotNull(collectionPosts);
     }
 }
