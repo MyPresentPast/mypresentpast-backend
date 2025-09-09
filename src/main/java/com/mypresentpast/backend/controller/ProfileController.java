@@ -4,7 +4,9 @@ import com.mypresentpast.backend.dto.request.ProfileUpdateRequest;
 import com.mypresentpast.backend.dto.request.profile.ChangePasswordRequest;
 import com.mypresentpast.backend.dto.response.ProfileResponse;
 import com.mypresentpast.backend.dto.response.ProfileUpdateResponse;
+import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.dto.response.UrlResponse;
+import java.util.List;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -56,5 +58,14 @@ public interface ProfileController {
      */
     @PutMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<UrlResponse> uploadMyAvatar(@RequestPart("avatar") MultipartFile file);
+
+    /**
+     * Obtiene las publicaciones que el usuario autenticado ha likeado.
+     * Útil para mostrar en la sección "Posts que me gustaron" del perfil.
+     *
+     * @return lista de publicaciones likeadas por el usuario actual, ordenadas por fecha de like (más recientes primero)
+     */
+    @GetMapping("/me/liked-posts")
+    ResponseEntity<List<PostResponse>> getMyLikedPosts();
 
 }

@@ -3,6 +3,7 @@ package com.mypresentpast.backend.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -11,6 +12,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mockStatic;
 
 import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.request.CreatePostRequest;
@@ -30,6 +32,8 @@ import com.mypresentpast.backend.repository.MediaRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
+import com.mypresentpast.backend.service.LikeService;
+import com.mypresentpast.backend.utils.SecurityUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +48,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockedStatic;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,6 +68,9 @@ class PostServiceImplTest {
 
     @Mock
     private CloudinaryService cloudinaryService;
+
+    @Mock
+    private LikeService likeService;
 
     @Mock
     private MultipartFile mockImage;
@@ -207,6 +215,8 @@ class PostServiceImplTest {
     void getPostById_Success() {
         // Given
         when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+        when(likeService.getTotalLikes(1L)).thenReturn(5L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
 
         // When
         PostResponse response = postService.getPostById(1L);
@@ -216,7 +226,11 @@ class PostServiceImplTest {
         assertEquals("Test Post", response.getTitle());
         assertEquals("Test Content", response.getContent());
         assertEquals(testUser.getProfileUsername(), response.getAuthor().getName());
+        assertEquals(5L, response.getTotalLikes());
+        assertEquals(true, response.getIsLiked());
         verify(postRepository).findById(1L);
+        verify(likeService).getTotalLikes(1L);
+        verify(likeService).isLikedByCurrentUser(1L);
     }
 
     @Test
@@ -241,6 +255,8 @@ class PostServiceImplTest {
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
             anyString(), any(LocalDate.class), any(Boolean.class), any(Boolean.class), any(Long.class)))
             .thenReturn(mockPosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(8L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
 
         // When
         MapResponse response = postService.getMapData(
@@ -251,6 +267,8 @@ class PostServiceImplTest {
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
         assertEquals("Test Post", response.getPosts().get(0).getTitle());
+        assertEquals(8L, response.getPosts().get(0).getTotalLikes());
+        assertEquals(true, response.getPosts().get(0).getIsLiked());
         verify(postRepository).findPostsInAreaWithFilters(
             -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), true, false, 1L
         );
@@ -264,6 +282,8 @@ class PostServiceImplTest {
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
             anyString(), any(), any(), any(), any()))
             .thenReturn(mockPosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(2L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
 
         // When
         MapResponse response = postService.getMapData(
@@ -273,6 +293,8 @@ class PostServiceImplTest {
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
+        assertEquals(2L, response.getPosts().get(0).getTotalLikes());
+        assertEquals(false, response.getPosts().get(0).getIsLiked());
         verify(postRepository).findPostsInAreaWithFilters(
             -35.0, -34.0, -59.0, -58.0, "", null, null, null, null
         );
@@ -286,6 +308,8 @@ class PostServiceImplTest {
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
             eq(""), any(), any(), any(), any()))
             .thenReturn(mockPosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(0L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
 
         // When
         MapResponse response = postService.getMapData(
@@ -295,6 +319,8 @@ class PostServiceImplTest {
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
+        assertEquals(0L, response.getPosts().get(0).getTotalLikes());
+        assertEquals(false, response.getPosts().get(0).getIsLiked());
         verify(postRepository).findPostsInAreaWithFilters(
             -35.0, -34.0, -59.0, -58.0, "", null, null, null, null
         );
@@ -308,6 +334,8 @@ class PostServiceImplTest {
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
             anyString(), any(), eq(true), any(), any()))
             .thenReturn(mockPosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(12L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
 
         // When
         MapResponse response = postService.getMapData(
@@ -317,6 +345,8 @@ class PostServiceImplTest {
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
+        assertEquals(12L, response.getPosts().get(0).getTotalLikes());
+        assertEquals(true, response.getPosts().get(0).getIsLiked());
         verify(postRepository).findPostsInAreaWithFilters(
             -35.0, -34.0, -59.0, -58.0, "", null, true, null, null
         );
@@ -330,6 +360,8 @@ class PostServiceImplTest {
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
             anyString(), any(), any(), eq(false), any()))
             .thenReturn(mockPosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(7L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
 
         // When
         MapResponse response = postService.getMapData(
@@ -339,6 +371,8 @@ class PostServiceImplTest {
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
+        assertEquals(7L, response.getPosts().get(0).getTotalLikes());
+        assertEquals(false, response.getPosts().get(0).getIsLiked());
         verify(postRepository).findPostsInAreaWithFilters(
             -35.0, -34.0, -59.0, -58.0, "", null, null, false, null
         );
@@ -352,6 +386,8 @@ class PostServiceImplTest {
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
             anyString(), any(), any(), any(), eq(1L)))
             .thenReturn(mockPosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(15L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
 
         // When
         MapResponse response = postService.getMapData(
@@ -362,9 +398,51 @@ class PostServiceImplTest {
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
         assertEquals("Test Post", response.getPosts().get(0).getTitle());
+        assertEquals(15L, response.getPosts().get(0).getTotalLikes());
+        assertEquals(true, response.getPosts().get(0).getIsLiked());
         verify(postRepository).findPostsInAreaWithFilters(
             -35.0, -34.0, -59.0, -58.0, "", null, null, null, 1L
         );
+    }
+
+    @Test
+    void getLikedPostsByCurrentUser_Success() {
+        // Given
+        List<Post> likedPosts = Arrays.asList(testPost);
+        when(postRepository.findLikedPostsByUserId(1L)).thenReturn(likedPosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(10L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
+
+        // When & Then - Mock SecurityUtils
+        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
+            mockedSecurityUtils.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            
+            List<PostResponse> response = postService.getLikedPostsByCurrentUser();
+
+            assertNotNull(response);
+            assertEquals(1, response.size());
+            assertEquals("Test Post", response.get(0).getTitle());
+            assertEquals(10L, response.get(0).getTotalLikes());
+            assertEquals(true, response.get(0).getIsLiked());
+            verify(postRepository).findLikedPostsByUserId(1L);
+        }
+    }
+
+    @Test
+    void getLikedPostsByCurrentUser_NoLikedPosts() {
+        // Given
+        when(postRepository.findLikedPostsByUserId(1L)).thenReturn(new ArrayList<>());
+
+        // When & Then - Mock SecurityUtils
+        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
+            mockedSecurityUtils.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            
+            List<PostResponse> response = postService.getLikedPostsByCurrentUser();
+
+            assertNotNull(response);
+            assertTrue(response.isEmpty());
+            verify(postRepository).findLikedPostsByUserId(1L);
+        }
     }
 
     @Test
@@ -373,6 +451,8 @@ class PostServiceImplTest {
         List<Post> activePosts = Arrays.asList(testPost);
         when(postRepository.findByStatusAndLocationIsNotNull(PostStatus.ACTIVE))
             .thenReturn(activePosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(3L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
 
         // When
         PostResponse response = postService.getRandomPost();
@@ -380,7 +460,11 @@ class PostServiceImplTest {
         // Then
         assertNotNull(response);
         assertEquals("Test Post", response.getTitle());
+        assertEquals(3L, response.getTotalLikes());
+        assertEquals(false, response.getIsLiked());
         verify(postRepository).findByStatusAndLocationIsNotNull(PostStatus.ACTIVE);
+        verify(likeService).getTotalLikes(1L);
+        verify(likeService).isLikedByCurrentUser(1L);
     }
 
     @Test

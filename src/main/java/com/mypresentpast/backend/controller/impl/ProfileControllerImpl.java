@@ -5,8 +5,11 @@ import com.mypresentpast.backend.dto.request.ProfileUpdateRequest;
 import com.mypresentpast.backend.dto.request.profile.ChangePasswordRequest;
 import com.mypresentpast.backend.dto.response.ProfileResponse;
 import com.mypresentpast.backend.dto.response.ProfileUpdateResponse;
+import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.dto.response.UrlResponse;
+import java.util.List;
 import com.mypresentpast.backend.service.ProfileService;
+import com.mypresentpast.backend.service.PostService;
 import com.mypresentpast.backend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProfileControllerImpl implements ProfileController {
 
     private final ProfileService profileService;
+    private final PostService postService;
 
     @Override
     public ResponseEntity<ProfileResponse> getProfile(Long id) {
@@ -45,5 +49,11 @@ public class ProfileControllerImpl implements ProfileController {
     public ResponseEntity<UrlResponse> uploadMyAvatar(@RequestPart("avatar") MultipartFile file) {
         String url = profileService.uploadAvatar(file);
         return ResponseEntity.ok(new UrlResponse(url));
+    }
+
+    @Override
+    public ResponseEntity<List<PostResponse>> getMyLikedPosts() {
+        List<PostResponse> likedPosts = postService.getLikedPostsByCurrentUser();
+        return ResponseEntity.ok(likedPosts);
     }
 }
