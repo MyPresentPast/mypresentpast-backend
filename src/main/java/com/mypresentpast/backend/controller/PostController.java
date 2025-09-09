@@ -66,6 +66,7 @@ public interface PostController {
      * @param date       fecha exacta del slider temporal (ej: "2006-07-09")
      * @param isVerified filtro por publicaciones verificadas (true/false)
      * @param isByIA     filtro por publicaciones creadas con IA (true/false)
+     * @param userId     filtro por usuario específico (ID del usuario)
      * @return lista completa de posts en el área
      */
     @GetMapping("/map")
@@ -77,7 +78,8 @@ public interface PostController {
         @RequestParam(required = false) String category,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
         @RequestParam(required = false) Boolean isVerified,
-        @RequestParam(required = false) Boolean isByIA
+        @RequestParam(required = false) Boolean isByIA,
+        @RequestParam(required = false) Long userId
     );
 
     /**

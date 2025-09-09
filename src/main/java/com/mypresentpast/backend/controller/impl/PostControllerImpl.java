@@ -49,7 +49,7 @@ public class PostControllerImpl implements PostController {
     @Override
     public ResponseEntity<MapResponse> getMapData(
         double latMin, double latMax, double lonMin, double lonMax,
-        String category, LocalDate date, Boolean isVerified, Boolean isByIA) {
+        String category, LocalDate date, Boolean isVerified, Boolean isByIA, Long userId) {
 
         if (date != null && date.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("No se pueden consultar fechas futuras");
@@ -57,7 +57,7 @@ public class PostControllerImpl implements PostController {
 
         MapResponse response = postService.getMapData(
             latMin, latMax, lonMin, lonMax,
-            category, date, isVerified, isByIA
+            category, date, isVerified, isByIA, userId
         );
         return ResponseEntity.ok(response);
     }

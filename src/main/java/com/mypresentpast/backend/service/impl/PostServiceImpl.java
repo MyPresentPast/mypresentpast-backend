@@ -1,13 +1,13 @@
 package com.mypresentpast.backend.service.impl;
 
-import com.mypresentpast.backend.dto.response.ApiResponse;
-import com.mypresentpast.backend.dto.request.CreatePostRequest;
 import com.mypresentpast.backend.dto.LocationDto;
-import com.mypresentpast.backend.dto.response.MapResponse;
 import com.mypresentpast.backend.dto.MediaDto;
-import com.mypresentpast.backend.dto.response.PostResponse;
-import com.mypresentpast.backend.dto.request.UpdatePostRequest;
 import com.mypresentpast.backend.dto.UserDto;
+import com.mypresentpast.backend.dto.request.CreatePostRequest;
+import com.mypresentpast.backend.dto.request.UpdatePostRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.response.MapResponse;
+import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.enums.Category;
 import com.mypresentpast.backend.enums.MediaType;
 import com.mypresentpast.backend.enums.PostStatus;
@@ -174,7 +174,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date, Boolean isVerified, Boolean isByIA) {
+    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date, Boolean isVerified, Boolean isByIA, Long userId) {
 
         // 1. Convertir category string a Category enum
         Category categoryEnum = null;
@@ -190,11 +190,11 @@ public class PostServiceImpl implements PostService {
         // 2. Usar una sola query elegante con filtros opcionales
         String categoryString = (categoryEnum != null) ? categoryEnum.name() : "";
         List<Post> posts = postRepository.findPostsInAreaWithFilters(
-            latMin, latMax, lonMin, lonMax, categoryString, date, isVerified, isByIA
+            latMin, latMax, lonMin, lonMax, categoryString, date, isVerified, isByIA, userId
         );
 
-        log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, date={}, isVerified={}, isByIA={}",
-            posts.size(), latMin, lonMin, latMax, lonMax, category, date, isVerified, isByIA);
+        log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, date={}, isVerified={}, isByIA={}, userId={}",
+            posts.size(), latMin, lonMin, latMax, lonMax, category, date, isVerified, isByIA, userId);
 
         // 3. Convertir a DTOs
         List<PostResponse> postResponses = posts.stream()

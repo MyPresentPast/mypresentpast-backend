@@ -17,7 +17,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     /**
      * Query única y elegante con filtros opcionales.
-     * Incluye filtros por etiquetas (verificada y hecha por IA).
+     * Incluye filtros por etiquetas (verificada y hecha por IA) y usuario.
      */
     @Query(value = "SELECT p.* FROM post p " +
         "JOIN location l ON p.location_id = l.id " +
@@ -28,6 +28,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         "AND (CAST(:date AS DATE) IS NULL OR p.date = CAST(:date AS DATE)) " +
         "AND (:isVerified IS NULL OR p.is_verified = :isVerified) " +
         "AND (:isByIA IS NULL OR p.is_by_ia = :isByIA) " +
+        "AND (:userId IS NULL OR p.author_id = :userId) " +
         "ORDER BY p.posted_at DESC",
         nativeQuery = true)
     List<Post> findPostsInAreaWithFilters(
@@ -38,7 +39,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         @Param("category") String category,
         @Param("date") LocalDate date,
         @Param("isVerified") Boolean isVerified,
-        @Param("isByIA") Boolean isByIA
+        @Param("isByIA") Boolean isByIA,
+        @Param("userId") Long userId
     );
 
     /**

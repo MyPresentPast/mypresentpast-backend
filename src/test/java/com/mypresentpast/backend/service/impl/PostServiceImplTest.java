@@ -239,12 +239,12 @@ class PostServiceImplTest {
         List<Post> mockPosts = Arrays.asList(testPost);
         when(postRepository.findPostsInAreaWithFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(LocalDate.class), any(Boolean.class), any(Boolean.class)))
+            anyString(), any(LocalDate.class), any(Boolean.class), any(Boolean.class), any(Long.class)))
             .thenReturn(mockPosts);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), true, false
+            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), true, false, 1L
         );
 
         // Then
@@ -252,7 +252,7 @@ class PostServiceImplTest {
         assertEquals(1, response.getPosts().size());
         assertEquals("Test Post", response.getPosts().get(0).getTitle());
         verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), true, false
+            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), true, false, 1L
         );
     }
 
@@ -262,19 +262,19 @@ class PostServiceImplTest {
         List<Post> mockPosts = Arrays.asList(testPost);
         when(postRepository.findPostsInAreaWithFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), any(), any()))
+            anyString(), any(), any(), any(), any()))
             .thenReturn(mockPosts);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, null
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null
         );
 
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
         verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, null
+            -35.0, -34.0, -59.0, -58.0, "", null, null, null, null
         );
     }
 
@@ -284,19 +284,19 @@ class PostServiceImplTest {
         List<Post> mockPosts = Arrays.asList(testPost);
         when(postRepository.findPostsInAreaWithFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            eq(""), any(), any(), any()))
+            eq(""), any(), any(), any(), any()))
             .thenReturn(mockPosts);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, "INVALID_CATEGORY", null, null, null
+            -35.0, -34.0, -59.0, -58.0, "INVALID_CATEGORY", null, null, null, null
         );
 
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
         verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, null
+            -35.0, -34.0, -59.0, -58.0, "", null, null, null, null
         );
     }
 
@@ -306,19 +306,19 @@ class PostServiceImplTest {
         List<Post> mockPosts = Arrays.asList(testPost);
         when(postRepository.findPostsInAreaWithFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), eq(true), any()))
+            anyString(), any(), eq(true), any(), any()))
             .thenReturn(mockPosts);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, true, null
+            -35.0, -34.0, -59.0, -58.0, null, null, true, null, null
         );
 
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
         verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, true, null
+            -35.0, -34.0, -59.0, -58.0, "", null, true, null, null
         );
     }
 
@@ -328,19 +328,42 @@ class PostServiceImplTest {
         List<Post> mockPosts = Arrays.asList(testPost);
         when(postRepository.findPostsInAreaWithFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), any(), eq(false)))
+            anyString(), any(), any(), eq(false), any()))
             .thenReturn(mockPosts);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, false
+            -35.0, -34.0, -59.0, -58.0, null, null, null, false, null
         );
 
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
         verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, false
+            -35.0, -34.0, -59.0, -58.0, "", null, null, false, null
+        );
+    }
+
+    @Test
+    void getMapData_FilterByUser() {
+        // Given
+        List<Post> mockPosts = Arrays.asList(testPost);
+        when(postRepository.findPostsInAreaWithFilters(
+            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
+            anyString(), any(), any(), any(), eq(1L)))
+            .thenReturn(mockPosts);
+
+        // When
+        MapResponse response = postService.getMapData(
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, 1L
+        );
+
+        // Then
+        assertNotNull(response);
+        assertEquals(1, response.getPosts().size());
+        assertEquals("Test Post", response.getPosts().get(0).getTitle());
+        verify(postRepository).findPostsInAreaWithFilters(
+            -35.0, -34.0, -59.0, -58.0, "", null, null, null, 1L
         );
     }
 

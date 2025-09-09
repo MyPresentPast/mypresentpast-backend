@@ -51,10 +51,11 @@ public interface PostService {
      * @param date       fecha exacta del slider temporal
      * @param isVerified filtro por publicaciones verificadas
      * @param isByIA     filtro por publicaciones creadas con IA
+     * @param userId     filtro por usuario específico (ID del usuario)
      * @return lista completa de posts en el área
      */
     MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax,
-                           String category, LocalDate date, Boolean isVerified, Boolean isByIA);
+                           String category, LocalDate date, Boolean isVerified, Boolean isByIA, Long userId);
 
     /**
      * Obtener una publicación aleatoria.
