@@ -148,7 +148,7 @@ class CollectionServiceImplTest {
                          .thenReturn(userId);
             
             when(collectionRepository.countByAuthorId(userId)).thenReturn(5L);
-            when(collectionRepository.existsByNameAndAuthorId(anyString(), anyLong())).thenReturn(false);
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorId(anyString(), anyLong())).thenReturn(false);
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
             when(collectionRepository.save(any(Collection.class))).thenReturn(testCollection);
 
@@ -199,7 +199,7 @@ class CollectionServiceImplTest {
                          .thenReturn(userId);
             
             when(collectionRepository.countByAuthorId(userId)).thenReturn(5L);
-            when(collectionRepository.existsByNameAndAuthorId("Existing Collection", userId)).thenReturn(true);
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorId("Existing Collection", userId)).thenReturn(true);
 
             // When & Then
             BadRequestException exception = assertThrows(BadRequestException.class, 
@@ -226,7 +226,7 @@ class CollectionServiceImplTest {
             
             when(collectionRepository.findByIdAndAuthorId(collectionId, userId))
                 .thenReturn(Optional.of(testCollection));
-            when(collectionRepository.existsByNameAndAuthorIdAndIdNot(anyString(), anyLong(), anyLong()))
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorIdAndIdNot(anyString(), anyLong(), anyLong()))
                 .thenReturn(false);
             when(collectionRepository.save(any(Collection.class))).thenReturn(testCollection);
 
@@ -256,11 +256,9 @@ class CollectionServiceImplTest {
                 .thenReturn(Optional.of(testCollection));
 
             // When
-            ApiResponse result = collectionService.deleteCollection(collectionId);
+            collectionService.deleteCollection(collectionId);
 
             // Then
-            assertNotNull(result);
-            assertEquals("Colección eliminada con éxito", result.getMessage());
             verify(collectionRepository).delete(testCollection);
         }
     }
@@ -445,7 +443,7 @@ class CollectionServiceImplTest {
                          .thenReturn(userId);
             
             when(collectionRepository.countByAuthorId(userId)).thenReturn(5L);
-            when(collectionRepository.existsByNameAndAuthorId(anyString(), anyLong())).thenReturn(false);
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorId(anyString(), anyLong())).thenReturn(false);
             when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
             when(collectionRepository.save(any(Collection.class))).thenReturn(testCollection);

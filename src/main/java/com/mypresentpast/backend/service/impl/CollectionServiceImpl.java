@@ -79,8 +79,11 @@ public class CollectionServiceImpl implements CollectionService {
             throw new BadRequestException("Has alcanzado el límite máximo de " + MAX_COLLECTIONS_PER_USER + " colecciones");
         }
         
-        // Validar nombre único por usuario
-        if (collectionRepository.existsByNameAndAuthorId(request.getName(), currentUserId)) {
+        // Aplicar trim al nombre
+        String trimmedName = request.getName().trim();
+        
+        // Validar nombre único por usuario (ignorando mayúsculas/minúsculas)
+        if (collectionRepository.existsByNameIgnoreCaseAndAuthorId(trimmedName, currentUserId)) {
             throw new BadRequestException("Ya tienes una colección con ese nombre");
         }
         
@@ -88,7 +91,7 @@ public class CollectionServiceImpl implements CollectionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         
         Collection collection = Collection.builder()
-                .name(request.getName())
+                .name(trimmedName)
                 .description(request.getDescription())
                 .author(currentUser)
                 .build();
@@ -108,11 +111,14 @@ public class CollectionServiceImpl implements CollectionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Colección no encontrada"));
         
         // Validar nombre único si se está cambiando
-        if (request.getName() != null && !request.getName().equals(collection.getName())) {
-            if (collectionRepository.existsByNameAndAuthorIdAndIdNot(request.getName(), currentUserId, id)) {
-                throw new BadRequestException("Ya tienes una colección con ese nombre");
+        if (request.getName() != null) {
+            String trimmedName = request.getName().trim();
+            if (!trimmedName.equalsIgnoreCase(collection.getName())) {
+                if (collectionRepository.existsByNameIgnoreCaseAndAuthorIdAndIdNot(trimmedName, currentUserId, id)) {
+                    throw new BadRequestException("Ya tienes una colección con ese nombre");
+                }
+                collection.setName(trimmedName);
             }
-            collection.setName(request.getName());
         }
         
         // Actualizar descripción si se proporciona
@@ -129,17 +135,13 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    public ApiResponse deleteCollection(Long id) {
+    public void deleteCollection(Long id) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         
         Collection collection = collectionRepository.findByIdAndAuthorId(id, currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Colección no encontrada"));
         
         collectionRepository.delete(collection);
-        
-        return ApiResponse.builder()
-                .message("Colección eliminada con éxito")
-                .build();
     }
 
     @Override
@@ -258,8 +260,11 @@ public class CollectionServiceImpl implements CollectionService {
             throw new BadRequestException("Has alcanzado el límite máximo de " + MAX_COLLECTIONS_PER_USER + " colecciones");
         }
         
-        // Validar nombre único por usuario
-        if (collectionRepository.existsByNameAndAuthorId(request.getName(), currentUserId)) {
+        // Aplicar trim al nombre
+        String trimmedName = request.getName().trim();
+        
+        // Validar nombre único por usuario (ignorando mayúsculas/minúsculas)
+        if (collectionRepository.existsByNameIgnoreCaseAndAuthorId(trimmedName, currentUserId)) {
             throw new BadRequestException("Ya tienes una colección con ese nombre");
         }
         
@@ -276,7 +281,7 @@ public class CollectionServiceImpl implements CollectionService {
         
         // Crear la colección
         Collection collection = Collection.builder()
-                .name(request.getName())
+                .name(trimmedName)
                 .description(request.getDescription())
                 .author(currentUser)
                 .build();

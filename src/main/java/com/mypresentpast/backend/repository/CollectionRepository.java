@@ -40,12 +40,22 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
     List<Object[]> findCollectionsWithPostCountByAuthorId(@Param("authorId") Long authorId);
 
     /**
-     * Verifica si existe una colección con el mismo nombre para un usuario.
+     * Verifica si existe una colección con el mismo nombre para un usuario (case sensitive).
      */
     boolean existsByNameAndAuthorId(String name, Long authorId);
 
     /**
-     * Verifica si existe una colección con el mismo nombre para un usuario, excluyendo una colección específica.
+     * Verifica si existe una colección con el mismo nombre para un usuario, ignorando mayúsculas/minúsculas.
+     */
+    boolean existsByNameIgnoreCaseAndAuthorId(String name, Long authorId);
+
+    /**
+     * Verifica si existe una colección con el mismo nombre para un usuario, excluyendo una colección específica (case sensitive).
      */
     boolean existsByNameAndAuthorIdAndIdNot(String name, Long authorId, Long collectionId);
+
+    /**
+     * Verifica si existe una colección con el mismo nombre para un usuario, excluyendo una colección específica, ignorando mayúsculas/minúsculas.
+     */
+    boolean existsByNameIgnoreCaseAndAuthorIdAndIdNot(String name, Long authorId, Long collectionId);
 }
