@@ -9,6 +9,7 @@ import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.MapResponse;
 import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.service.PostService;
+import com.mypresentpast.backend.service.PostVerificationService;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class PostControllerImpl implements PostController {
 
     private final PostService postService;
+    private final PostVerificationService postVerificationService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -78,6 +80,18 @@ public class PostControllerImpl implements PostController {
     @Override
     public ResponseEntity<ApiResponse> deletePost(Long id) {
         ApiResponse response = postService.deletePost(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> verifyPost(Long id) {
+        ApiResponse response = postVerificationService.verifyPost(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> unverifyPost(Long id) {
+        ApiResponse response = postVerificationService.unverifyPost(id);
         return ResponseEntity.ok(response);
     }
 }

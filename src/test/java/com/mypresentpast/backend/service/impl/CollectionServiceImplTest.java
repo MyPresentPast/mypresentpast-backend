@@ -29,6 +29,7 @@ import com.mypresentpast.backend.repository.CollectionPostRepository;
 import com.mypresentpast.backend.repository.CollectionRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
+import com.mypresentpast.backend.service.PostVerificationQueryService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -57,6 +58,9 @@ class CollectionServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PostVerificationQueryService verificationQueryService;
 
     @InjectMocks
     private CollectionServiceImpl collectionService;
@@ -303,6 +307,8 @@ class CollectionServiceImplTest {
                 .thenReturn(Optional.of(testCollection));
             when(collectionPostRepository.findByCollectionIdOrderByAddedAtDesc(collectionId))
                 .thenReturn(collectionPosts);
+            when(verificationQueryService.isPostVerified(testPost)).thenReturn(false);
+            when(verificationQueryService.getExternalVerifier(testPost.getId())).thenReturn(null);
 
             // When
             List<PostResponse> result = collectionService.getCollectionPosts(collectionId);

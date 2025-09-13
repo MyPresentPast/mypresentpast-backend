@@ -61,10 +61,6 @@ public class Post {
     @Builder.Default
     private Boolean isByIA = false;
 
-    @Column(name = "is_verified", nullable = false)
-    @Builder.Default
-    private Boolean isVerified = false;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     @NotNull(message = "Author is required")

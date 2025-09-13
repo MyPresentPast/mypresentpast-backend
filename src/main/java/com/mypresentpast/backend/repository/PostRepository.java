@@ -4,6 +4,7 @@ import com.mypresentpast.backend.enums.PostStatus;
 import com.mypresentpast.backend.model.Post;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Repository;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     /**
-     * Query única y elegante con filtros opcionales.
-     * Incluye filtros por etiquetas (verificada y hecha por IA) y usuario.
+     * Query para obtener posts en un área con filtros básicos.
+     * El filtro de verificación se aplica después en el service.
      */
     @Query(value = "SELECT p.* FROM post p " +
         "JOIN location l ON p.location_id = l.id " +
@@ -26,7 +27,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         "AND p.status = 'ACTIVE' " +
         "AND (NULLIF(:category, '') IS NULL OR p.category = :category) " +
         "AND (CAST(:date AS DATE) IS NULL OR p.date = CAST(:date AS DATE)) " +
-        "AND (:isVerified IS NULL OR p.is_verified = :isVerified) " +
         "AND (:isByIA IS NULL OR p.is_by_ia = :isByIA) " +
         "AND (:userId IS NULL OR p.author_id = :userId) " +
         "ORDER BY p.posted_at DESC",
@@ -38,7 +38,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         @Param("lonMax") double lonMax,
         @Param("category") String category,
         @Param("date") LocalDate date,
-        @Param("isVerified") Boolean isVerified,
         @Param("isByIA") Boolean isByIA,
         @Param("userId") Long userId
     );
@@ -49,9 +48,22 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByStatusAndLocationIsNotNull(PostStatus status);
 
     /**
-     * Busca posts por usuario.
+     * Busca posts por usuario con autor cargado.
      */
-    List<Post> findByAuthorId(Long id);
+    @Query("SELECT p FROM Post p " +
+           "LEFT JOIN FETCH p.author " +
+           "WHERE p.author.id = :authorId")
+    List<Post> findByAuthorId(@Param("authorId") Long id);
+
+    /**
+     * Busca un post por ID con autor y ubicación cargados.
+     */
+    @Query("SELECT p FROM Post p " +
+           "LEFT JOIN FETCH p.author " +
+           "LEFT JOIN FETCH p.location " +
+           "WHERE p.id = :id")
+    Optional<Post> findByIdWithRelations(@Param("id") Long id);
+
 
     /**
      * Cuenta el número de posts activos de un usuario.
