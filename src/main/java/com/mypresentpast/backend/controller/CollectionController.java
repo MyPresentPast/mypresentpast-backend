@@ -56,10 +56,10 @@ public interface CollectionController {
      * Eliminar colección.
      *
      * @param id ID de la colección
-     * @return mensaje de éxito
+     * @return 204 No Content
      */
     @DeleteMapping("/{id}")
-    ResponseEntity<ApiResponse> deleteCollection(@PathVariable Long id);
+    ResponseEntity<Void> deleteCollection(@PathVariable Long id);
 
     /**
      * Obtener posts de una colección.

@@ -42,9 +42,9 @@ public class CollectionControllerImpl implements CollectionController {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> deleteCollection(Long id) {
-        ApiResponse response = collectionService.deleteCollection(id);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Void> deleteCollection(Long id) {
+        collectionService.deleteCollection(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Override

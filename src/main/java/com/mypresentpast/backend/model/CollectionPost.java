@@ -14,8 +14,9 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Entidad representante de la relación entre Collection y Post.
@@ -25,7 +26,8 @@ import lombok.NoArgsConstructor;
     name = "collection_post",
     uniqueConstraints = @UniqueConstraint(columnNames = {"collection_id", "post_id"})
 )
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

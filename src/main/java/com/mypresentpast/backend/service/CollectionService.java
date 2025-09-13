@@ -42,9 +42,8 @@ public interface CollectionService {
      * Eliminar colección.
      *
      * @param id ID de la colección
-     * @return mensaje de éxito
      */
-    ApiResponse deleteCollection(Long id);
+    void deleteCollection(Long id);
 
     /**
      * Obtener posts de una colección.
