@@ -1,0 +1,387 @@
+{
+	"info": {
+		"_postman_id": "cccc3333-4444-5555-6666-777788889999",
+		"name": "🏛️ MyPresentPast - Solicitudes de Institución (PR2 REFACTORIZADO)",
+		"description": "🎯 **SISTEMA DE SOLICITUDES DE INSTITUCIÓN - PR2 (REFACTORIZADO)**\n\n🔥 **FLUJO AUTOMÁTICO SIMPLIFICADO:**\n1. ✅ **PASO 1:** Ejecuta 'Login Usuario Normal' → Obtén token de usuario NORMAL\n2. ✅ **PASO 2:** Ejecuta 'Create Institution Request' → Sube documento Y crea solicitud en UNA operación\n3. ✅ **PASO 3:** Ejecuta 'Get My Requests' → Ve tus solicitudes\n4. ✅ **PASO 4:** Ejecuta 'Cancel Request' → Cancela solicitud si es PENDING\n\n🎉 **FUNCIONALIDADES REFACTORIZADAS:**\n• 🏛️ **Solicitudes de institución** para usuarios NORMAL\n• 📄 **Upload integrado** (PDF/JPG/PNG, max 5MB) - IGUAL QUE POSTS\n• 📋 **Gestión de solicitudes** (crear, ver, cancelar)\n• 🔒 **Validaciones de negocio** (1 solicitud activa por usuario)\n• ☁️ **Integración Cloudinary** automática en creación\n• 🔄 **Operación atómica** - documento + solicitud en un solo endpoint\n\n🛠️ **ENDPOINTS INCLUIDOS:**\n• 🔐 Login para obtener token de usuario NORMAL\n• 🏛️ POST /institution-requests - Crear solicitud CON documento (multipart)\n• 📋 GET /institution-requests/my - Ver mis solicitudes\n• ❌ DELETE /institution-requests/{id} - Cancelar solicitud\n• ✅ GET /institution-requests/can-create - Verificar si puede crear\n\n⚡ **VARIABLES AUTOMÁTICAS:**\n• `{{base_url}}` = http://localhost:8081\n• `{{normal_token}}` = Token de usuario normal\n• `{{request_id}}` = ID de solicitud creada\n\n📅 **Refactorizado:** 13 de Septiembre 2025 - Consistencia con patrón de Posts\n\n🆕 **MEJORAS DEL REFACTOR:**\n• ✅ Consistencia con creación de posts (multipart en un endpoint)\n• ✅ Menos pasos para el usuario (UX mejorada)\n• ✅ Operación atómica (todo o nada)\n• ✅ Manejo de errores simplificado\n• ✅ Validaciones integradas en el servicio",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "26570332"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "👤 Login Usuario Normal",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 🔥 Script automático para guardar token de usuario NORMAL",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    pm.environment.set('normal_token', responseJson.token);",
+									"    console.log('✅ Login exitoso como usuario NORMAL');",
+									"    console.log('🎯 Token guardado automáticamente');",
+									"    console.log('💡 Ahora puedes crear solicitudes de institución');",
+									"} else {",
+									"    console.log('❌ Error en login:', pm.response.text());",
+									"    console.log('💡 Verifica que el usuario existe y la contraseña es correcta');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"normal@test.com\",\n  \"password\": \"TestPassword123\"\n}"
+						},
+						"url": "{{base_url}}/auth/login"
+					}
+				}
+			]
+		},
+		{
+			"name": "🏛️ Institution Requests",
+			"item": [
+				{
+					"name": "✅ Check Can Create Request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 🔥 Test para verificar si puede crear solicitud",
+									"if (pm.response.code === 200) {",
+									"    const canCreate = pm.response.json();",
+									"    console.log('✅ Verificación exitosa');",
+									"    if (canCreate) {",
+									"        console.log('🎯 PUEDE crear nueva solicitud');",
+									"        console.log('💡 Usuario es NORMAL y no tiene solicitud activa');",
+									"    } else {",
+									"        console.log('⚠️ NO PUEDE crear nueva solicitud');",
+									"        console.log('💡 Posibles razones:');",
+									"        console.log('   - Usuario no es NORMAL');",
+									"        console.log('   - Ya tiene solicitud activa (PENDING/IN_REVIEW/APPROVED)');",
+									"    }",
+									"} else {",
+									"    console.log('❌ Error al verificar:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{normal_token}}"
+							}
+						],
+						"url": "{{base_url}}/institution-requests/can-create"
+					}
+				},
+				{
+					"name": "🏛️ Create Institution Request (WITH Document)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 🔥 Script automático para crear solicitud de institución CON documento",
+									"if (pm.response.code === 201) {",
+									"    const responseJson = pm.response.json();",
+									"    console.log('✅ Solicitud de institución creada exitosamente');",
+									"    console.log('📝 Mensaje:', responseJson.message);",
+									"    console.log('🎯 Estado inicial: PENDING');",
+									"    console.log('📄 Documento subido automáticamente');",
+									"    console.log('💡 Ahora consulta tus solicitudes para ver el ID');",
+									"} else if (pm.response.code === 400) {",
+									"    const errorMsg = pm.response.json().message;",
+									"    console.log('⚠️ Error de validación:', errorMsg);",
+									"    if (errorMsg.includes('solicitud activa')) {",
+									"        console.log('💡 Tip: Ya tienes una solicitud activa. Cancélala primero si es PENDING');",
+									"    } else if (errorMsg.includes('documento')) {",
+									"        console.log('💡 Tip: Verifica que el documento sea PDF/JPG/PNG y menor a 5MB');",
+									"    } else if (errorMsg.includes('mayor a 5MB')) {",
+									"        console.log('💡 Tip: El documento es muy grande, usa uno menor a 5MB');",
+									"    } else if (errorMsg.includes('no permitido')) {",
+									"        console.log('💡 Tip: Solo se permiten archivos PDF, JPG y PNG');",
+									"    }",
+									"} else if (pm.response.code === 403) {",
+									"    console.log('🚫 No autorizado - VERIFICA:');",
+									"    console.log('   1. Que el token sea de un usuario NORMAL');",
+									"    console.log('   2. Que hayas ejecutado el login correctamente');",
+									"} else {",
+									"    console.log('❌ Error inesperado:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{normal_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "request",
+									"value": "{\n  \"institution_name\": \"Universidad de Ejemplo\",\n  \"legal_address\": \"Av. Universitaria 123, Ciudad Ejemplo, País\",\n  \"official_phone\": \"+1234567890\",\n  \"type\": \"UNIVERSITY\",\n  \"official_registry_number\": \"REG-2024-001\",\n  \"official_website\": \"https://www.universidad-ejemplo.edu\"\n}",
+									"type": "text",
+									"contentType": "application/json"
+								},
+								{
+									"key": "document",
+									"type": "file",
+									"src": [],
+									"description": "Selecciona un archivo PDF, JPG o PNG (máx 5MB)"
+								}
+							]
+						},
+						"url": "{{base_url}}/institution-requests"
+					}
+				},
+				{
+					"name": "📋 Get My Requests",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 🔥 Test para ver solicitudes del usuario",
+									"if (pm.response.code === 200) {",
+									"    const requests = pm.response.json();",
+									"    console.log('✅ Solicitudes obtenidas exitosamente');",
+									"    console.log('📊 Total de solicitudes:', requests.length);",
+									"    ",
+									"    if (requests.length > 0) {",
+									"        // Guardar ID de la primera solicitud para cancelar",
+									"        pm.environment.set('request_id', requests[0].id);",
+									"        ",
+									"        requests.forEach((request, index) => {",
+									"            console.log(`\\n📋 Solicitud ${index + 1}:`);",
+									"            console.log('   ID:', request.id);",
+									"            console.log('   Institución:', request.institution_name);",
+									"            console.log('   Tipo:', request.type);",
+									"            console.log('   Estado:', request.status);",
+									"            console.log('   Creada:', request.created_at);",
+									"            console.log('   Documento:', request.document_url ? '✅ Subido' : '❌ Sin documento');",
+									"            if (request.reviewed_at) {",
+									"                console.log('   Revisada:', request.reviewed_at);",
+									"            }",
+									"            if (request.rejection_reason) {",
+									"                console.log('   Motivo rechazo:', request.rejection_reason);",
+									"            }",
+									"        });",
+									"        ",
+									"        console.log('\\n🎯 ID de primera solicitud guardado para cancelar');",
+									"    } else {",
+									"        console.log('📝 No tienes solicitudes creadas aún');",
+									"    }",
+									"} else {",
+									"    console.log('❌ Error al obtener solicitudes:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{normal_token}}"
+							}
+						],
+						"url": "{{base_url}}/institution-requests/my"
+					}
+				},
+				{
+					"name": "❌ Cancel Request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 🔥 Test para cancelar solicitud",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    console.log('✅ Solicitud cancelada exitosamente');",
+									"    console.log('📝 Mensaje:', responseJson.message);",
+									"    console.log('🎯 Estado cambiado a: CANCELLED');",
+									"    console.log('💡 Ahora puedes crear una nueva solicitud');",
+									"} else if (pm.response.code === 400) {",
+									"    const errorMsg = pm.response.json().message;",
+									"    console.log('⚠️ Error de validación:', errorMsg);",
+									"    if (errorMsg.includes('pendientes')) {",
+									"        console.log('💡 Tip: Solo se pueden cancelar solicitudes PENDING');",
+									"        console.log('💡 Si está IN_REVIEW o APPROVED, no se puede cancelar');",
+									"    }",
+									"} else if (pm.response.code === 404) {",
+									"    console.log('❌ Solicitud no encontrada');",
+									"    console.log('💡 Tip: Verifica que el ID sea correcto y sea tuya');",
+									"} else {",
+									"    console.log('❌ Error inesperado:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{normal_token}}"
+							}
+						],
+						"url": "{{base_url}}/institution-requests/{{request_id}}"
+					}
+				}
+			]
+		},
+		{
+			"name": "🧪 Test Scenarios",
+			"item": [
+				{
+					"name": "🚫 Try Create Request as Institution (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 🔥 Test negativo - institución no puede crear solicitud",
+									"if (pm.response.code === 403) {",
+									"    console.log('✅ Test CORRECTO: Institución no puede crear solicitud');",
+									"    console.log('🔒 Seguridad funcionando: Solo usuarios NORMAL pueden solicitar');",
+									"} else if (pm.response.code === 400) {",
+									"    const errorMsg = pm.response.json().message;",
+									"    if (errorMsg.includes('usuarios normales')) {",
+									"        console.log('✅ Test CORRECTO: Validación de rol funcionando');",
+									"    } else {",
+									"        console.log('⚠️ Error diferente al esperado:', errorMsg);",
+									"    }",
+									"} else {",
+									"    console.log('❌ Test FALLIDO: Debería fallar con 403 o 400');",
+									"    console.log('📝 Respuesta:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{institution_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "request",
+									"value": "{\n  \"institution_name\": \"Test Institution\",\n  \"legal_address\": \"Test Address 123\",\n  \"official_phone\": \"+1234567890\",\n  \"type\": \"UNIVERSITY\"\n}",
+									"type": "text",
+									"contentType": "application/json"
+								},
+								{
+									"key": "document",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": "{{base_url}}/institution-requests"
+					}
+				},
+				{
+					"name": "📄 Try Create Without Document (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 🔥 Test negativo - crear sin documento",
+									"if (pm.response.code === 400) {",
+									"    const errorMsg = pm.response.json().message;",
+									"    console.log('✅ Test CORRECTO: Crear sin documento falla');",
+									"    console.log('🔒 Validación funcionando:', errorMsg);",
+									"    if (errorMsg.includes('documento es requerido')) {",
+									"        console.log('💡 Validación específica: Documento requerido');",
+									"    }",
+									"} else {",
+									"    console.log('❌ Test FALLIDO: Debería fallar con 400');",
+									"    console.log('📝 Respuesta:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{normal_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "request",
+									"value": "{\n  \"institution_name\": \"Test Institution\",\n  \"legal_address\": \"Test Address 123\",\n  \"official_phone\": \"+1234567890\",\n  \"type\": \"UNIVERSITY\"\n}",
+									"type": "text",
+									"contentType": "application/json"
+								}
+							]
+						},
+						"url": "{{base_url}}/institution-requests"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081"
+		},
+		{
+			"key": "normal_token",
+			"value": ""
+		},
+		{
+			"key": "institution_token",
+			"value": ""
+		},
+		{
+			"key": "request_id",
+			"value": ""
+		}
+	]
+}
