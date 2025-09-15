@@ -15,6 +15,16 @@ public interface AIProvider {
     String correctContent(String content);
 
     /**
+     * Genera contenido para una publicación usando el motor de IA específico.
+     *
+     * @param date la fecha de la publicación
+     * @param location la ubicación (dirección)
+     * @param context el contexto proporcionado por el usuario
+     * @return el contenido generado en formato JSON con título, contenido y categoría
+     */
+    String generatePostContent(String date, String location, String context);
+
+    /**
      * Obtiene el nombre del proveedor.
      *
      * @return el nombre del proveedor (ej: "OpenAI", "Demo", "Claude")

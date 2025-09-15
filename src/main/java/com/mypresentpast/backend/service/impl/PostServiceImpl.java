@@ -23,6 +23,7 @@ import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
 import com.mypresentpast.backend.service.LikeService;
 import com.mypresentpast.backend.service.PostService;
+import com.mypresentpast.backend.service.PostVerificationQueryService;
 import com.mypresentpast.backend.utils.SecurityUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class PostServiceImpl implements PostService {
     private final MediaRepository mediaRepository;
     private final CloudinaryService cloudinaryService;
     private final LikeService likeService;
+    private final PostVerificationQueryService verificationQueryService;
 
     @Override
     public ApiResponse createPost(CreatePostRequest request, List<MultipartFile> images) {
@@ -71,7 +73,6 @@ public class PostServiceImpl implements PostService {
             .postedAt(LocalDate.now())
             .category(request.getCategory())
             .isByIA(request.getIsByIA())
-            .isVerified(false) // Por defecto los posts nuevos no están verificados
             .status(PostStatus.ACTIVE)
             .author(author)
             .location(location)
@@ -153,8 +154,9 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PostResponse getPostById(Long id) {
-        Post post = postRepository.findById(id)
+        Post post = postRepository.findByIdWithRelations(id)
             .orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada con id: " + id));
+        
         return mapToPostResponse(post);
     }
 
@@ -210,17 +212,18 @@ public class PostServiceImpl implements PostService {
             }
         }
 
-        // 2. Usar una sola query elegante con filtros opcionales
+        // 2. Usar query con filtros básicos (sin isVerified)
         String categoryString = (categoryEnum != null) ? categoryEnum.name() : "";
         List<Post> posts = postRepository.findPostsInAreaWithFilters(
-            latMin, latMax, lonMin, lonMax, categoryString, date, isVerified, isByIA, userId
+            latMin, latMax, lonMin, lonMax, categoryString, date, isByIA, userId
         );
 
         log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, date={}, isVerified={}, isByIA={}, userId={}",
             posts.size(), latMin, lonMin, latMax, lonMax, category, date, isVerified, isByIA, userId);
 
-        // 3. Convertir a DTOs
+        // 3. Filtrar por verificación si es necesario y convertir a DTOs
         List<PostResponse> postResponses = posts.stream()
+            .filter(post -> isVerified == null || verificationQueryService.isPostVerified(post) == isVerified)
             .map(this::mapToPostResponse)
             .collect(Collectors.toList());
 
@@ -456,8 +459,19 @@ public class PostServiceImpl implements PostService {
         response.setPostedAt(post.getPostedAt());
         response.setDate(post.getDate());
         response.setIsByIA(post.getIsByIA());
-        response.setIsVerified(post.getIsVerified());
+        response.setIsVerified(verificationQueryService.isPostVerified(post));
         response.setCategory(post.getCategory());
+
+        // Mapear quién verificó el post externamente (si existe)
+        User externalVerifier = verificationQueryService.getExternalVerifier(post.getId());
+        if (externalVerifier != null) {
+            UserDto verifiedByDto = new UserDto();
+            verifiedByDto.setId(externalVerifier.getId());
+            verifiedByDto.setName(externalVerifier.getProfileUsername());
+            verifiedByDto.setType(externalVerifier.getRole());
+            verifiedByDto.setAvatar(externalVerifier.getAvatar());
+            response.setVerifiedBy(verifiedByDto);
+        }
         response.setStatus(post.getStatus());
 
         // Mapear autor manualmente

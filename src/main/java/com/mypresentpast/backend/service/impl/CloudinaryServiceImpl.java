@@ -176,4 +176,33 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             throw new BadRequestException(MessageBundle.AVATAR_FILE_INVALID_TYPE);
         }
     }
+
+    @Override
+    public Map<String, Object> upload(MultipartFile file, Map<String, Object> options) {
+        log.info("Subiendo archivo con opciones personalizadas: {}", options);
+        
+        File tempFile = null;
+        try {
+            // Convertir MultipartFile a File temporal
+            tempFile = convert(file);
+            
+            // Subir con opciones personalizadas
+            Map<String, Object> result = cloudinary.uploader().upload(tempFile, options);
+            
+            log.info("Archivo subido exitosamente con public_id: {}", result.get("public_id"));
+            return result;
+            
+        } catch (Exception e) {
+            log.error("Error al subir archivo con opciones personalizadas", e);
+            throw new CloudinaryException("Error al subir archivo: " + e.getMessage(), e);
+        } finally {
+            // Limpiar archivo temporal
+            if (tempFile != null && tempFile.exists()) {
+                boolean deleted = tempFile.delete();
+                if (!deleted) {
+                    log.warn("No se pudo eliminar el archivo temporal: {}", tempFile.getAbsolutePath());
+                }
+            }
+        }
+    }
 } 

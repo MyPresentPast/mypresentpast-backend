@@ -17,6 +17,7 @@ import com.mypresentpast.backend.model.Collection;
 import com.mypresentpast.backend.model.CollectionPost;
 import com.mypresentpast.backend.model.Post;
 import com.mypresentpast.backend.model.User;
+import com.mypresentpast.backend.service.PostVerificationQueryService;
 import com.mypresentpast.backend.repository.CollectionPostRepository;
 import com.mypresentpast.backend.repository.CollectionRepository;
 import com.mypresentpast.backend.repository.PostRepository;
@@ -45,6 +46,7 @@ public class CollectionServiceImpl implements CollectionService {
     private final CollectionPostRepository collectionPostRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostVerificationQueryService verificationQueryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -312,8 +314,19 @@ public class CollectionServiceImpl implements CollectionService {
         response.setPostedAt(post.getPostedAt());
         response.setDate(post.getDate());
         response.setIsByIA(post.getIsByIA());
-        response.setIsVerified(post.getIsVerified());
+        response.setIsVerified(verificationQueryService.isPostVerified(post));
         response.setCategory(post.getCategory());
+
+        // Mapear quién verificó el post externamente (si existe)
+        User externalVerifier = verificationQueryService.getExternalVerifier(post.getId());
+        if (externalVerifier != null) {
+            UserDto verifiedByDto = new UserDto();
+            verifiedByDto.setId(externalVerifier.getId());
+            verifiedByDto.setName(externalVerifier.getProfileUsername());
+            verifiedByDto.setType(externalVerifier.getRole());
+            verifiedByDto.setAvatar(externalVerifier.getAvatar());
+            response.setVerifiedBy(verifiedByDto);
+        }
         response.setStatus(post.getStatus());
 
         // Mapear autor manualmente
