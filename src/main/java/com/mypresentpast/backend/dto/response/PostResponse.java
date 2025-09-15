@@ -28,6 +28,7 @@ public class PostResponse {
     private LocalDate date;
     private Boolean isByIA;
     private Boolean isVerified;
+    private UserDto verifiedBy;  // Usuario que verificó el post (null si auto-verificado)
     private UserDto author;
     private Category category;
     private LocationDto location;
