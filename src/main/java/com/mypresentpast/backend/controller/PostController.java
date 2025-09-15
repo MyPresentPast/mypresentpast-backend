@@ -114,4 +114,26 @@ public interface PostController {
      */
     @DeleteMapping("/{id}")
     ResponseEntity<ApiResponse> deletePost(@PathVariable Long id);
+
+    /**
+     * Verificar un post. Solo pueden verificar usuarios con rol INSTITUTION.
+     * Restricciones:
+     * - Solo posts con estado ACTIVE
+     * - No pueden verificar sus propios posts (ya están auto-verificados)
+     * - Solo puede haber una verificación activa por post
+     *
+     * @param id ID del post a verificar
+     * @return mensaje de éxito
+     */
+    @PostMapping("/{id}/verify")
+    ResponseEntity<ApiResponse> verifyPost(@PathVariable Long id);
+
+    /**
+     * Desverificar un post. Solo puede desverificar quien lo verificó originalmente.
+     *
+     * @param id ID del post a desverificar
+     * @return mensaje de éxito
+     */
+    @DeleteMapping("/{id}/verify")
+    ResponseEntity<ApiResponse> unverifyPost(@PathVariable Long id);
 }
