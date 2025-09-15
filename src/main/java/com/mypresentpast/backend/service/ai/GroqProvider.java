@@ -110,6 +110,94 @@ public class GroqProvider implements AIProvider {
     }
 
     @Override
+    public String generatePostContent(String date, String location, String context) {
+        if (apiKey == null || apiKey.trim().isEmpty() || "gsk_demo".equals(apiKey)) {
+            throw new IllegalStateException("Groq API key no configurada. Obtén una gratis en: https://console.groq.com/keys");
+        }
+
+        String prompt = "Eres un experto en historia y narrativa que crea publicaciones para la plataforma MyPresentPast.\n\n" +
+            "TAREA:\n" +
+            "Genera una publicación en base a la FECHA, UBICACIÓN y CONTEXTO proporcionados.\n\n" +
+            "REQUISITOS:\n" +
+            "1. El título debe ser atractivo y descriptivo (máximo 100 caracteres).\n" +
+            "2. El contenido debe ser educativo, claro y entre 200-800 caracteres.\n" +
+            "3. Selecciona solo UNA categoría:\n" +
+            "   - STORY: relato o narración histórica.\n" +
+            "   - INFORMATION: hecho o dato comprobado.\n" +
+            "   - MYTH: mito, leyenda o tradición popular.\n" +
+            "4. Usa un tono accesible para público general.\n" +
+            "5. Nunca inventes un evento en una fecha incorrecta.\n\n" +
+            "MANEJO DE FECHAS:\n" +
+            "- La fecha SIEMPRE está en formato YYYY-MM-DD (año-mes-día). Ejemplo: 2018-12-10 = 10 de diciembre de 2018.\n" +
+            "- Si la fecha coincide EXACTAMENTE con un evento: indícalo claramente.\n" +
+            "- Si la fecha es ANTERIOR o POSTERIOR al evento: calcula la diferencia en días de forma precisa.\n" +
+            "- Usa expresiones consistentes:\n" +
+            "   • Diferencia = 1 → 'Un día antes/después...'\n" +
+            "   • Diferencia > 1 → 'A N días de...'\n" +
+            "- Nunca alteres el valor de la fecha ni cambies su orden.\n" +
+        "FORMATO DE RESPUESTA (solo JSON válido, sin texto adicional):\n" +
+            "{\n" +
+            "  \"title\": \"Título de la publicación\",\n" +
+            "  \"content\": \"Contenido detallado de la publicación\",\n" +
+            "  \"category\": \"STORY|INFORMATION|MYTH\"\n" +
+            "}\n\n" +
+            "DATOS DE ENTRADA:\n" +
+            "- Fecha: " + date + "\n" +
+            "- Ubicación: " + location + "\n" +
+            "- Contexto: " + context;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", model);
+        requestBody.put("messages", List.of(
+            Map.of("role", "system", "content", prompt),
+            Map.of("role", "user", "content", "Genera la publicación basada en la información proporcionada.")
+        ));
+        requestBody.put("max_tokens", 1500);
+        requestBody.put("temperature", 0.7);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            log.info("Enviando request a Groq para generar publicación: fecha={}, ubicación={}", date, location);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                apiUrl,
+                HttpMethod.POST,
+                entity,
+                Map.class
+            );
+
+            Map<String, Object> responseBody = response.getBody();
+            if (responseBody == null) {
+                throw new RuntimeException("Respuesta vacía de Groq API");
+            }
+
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+            if (choices == null || choices.isEmpty()) {
+                throw new RuntimeException("No se recibieron opciones de Groq API");
+            }
+
+            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+            if (message == null) {
+                throw new RuntimeException("Mensaje vacío de Groq API");
+            }
+
+            String generatedContent = (String) message.get("content");
+            log.info("Groq generó publicación exitosamente");
+
+            return generatedContent.trim();
+
+        } catch (Exception e) {
+            log.error("Error generando publicación con Groq API: {}", e.getMessage(), e);
+            throw new RuntimeException("Error en API de Groq: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public String getProviderName() {
         return "Groq (Gratuito)";
     }
