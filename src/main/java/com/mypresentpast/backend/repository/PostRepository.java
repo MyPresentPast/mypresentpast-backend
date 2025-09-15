@@ -57,4 +57,15 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * Cuenta el número de posts activos de un usuario.
      */
     long countByAuthorIdAndStatus(Long authorId, PostStatus status);
+
+    /**
+     * Obtiene los posts que un usuario ha likeado, ordenados por fecha de like (más recientes primero).
+     */
+    @Query(value = "SELECT p.* FROM post p " +
+        "INNER JOIN post_like pl ON p.id = pl.post_id " +
+        "WHERE pl.user_id = :userId " +
+        "AND p.status = 'ACTIVE' " +
+        "ORDER BY pl.created_at DESC",
+        nativeQuery = true)
+    List<Post> findLikedPostsByUserId(@Param("userId") Long userId);
 }

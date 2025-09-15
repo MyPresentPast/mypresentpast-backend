@@ -21,7 +21,9 @@ import com.mypresentpast.backend.repository.MediaRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
+import com.mypresentpast.backend.service.LikeService;
 import com.mypresentpast.backend.service.PostService;
+import com.mypresentpast.backend.utils.SecurityUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,7 @@ public class PostServiceImpl implements PostService {
     private final LocationRepository locationRepository;
     private final MediaRepository mediaRepository;
     private final CloudinaryService cloudinaryService;
+    private final LikeService likeService;
 
     @Override
     public ApiResponse createPost(CreatePostRequest request, List<MultipartFile> images) {
@@ -169,6 +172,26 @@ public class PostServiceImpl implements PostService {
             postResponses.add(mapToPostResponse(post));
         }
 
+        return postResponses;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostResponse> getLikedPostsByCurrentUser() {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        List<Post> likedPosts = postRepository.findLikedPostsByUserId(currentUserId);
+
+        if (likedPosts.isEmpty()) {
+            log.info("Usuario {} no tiene posts likeados", currentUserId);
+            return new ArrayList<>();
+        }
+
+        List<PostResponse> postResponses = new ArrayList<>();
+        for (Post post : likedPosts) {
+            postResponses.add(mapToPostResponse(post));
+        }
+
+        log.info("Usuario {} tiene {} posts likeados", currentUserId, postResponses.size());
         return postResponses;
     }
 
@@ -472,6 +495,12 @@ public class PostServiceImpl implements PostService {
         } else {
             response.setMedia(new ArrayList<>());
         }
+
+        Long totalLikes = likeService.getTotalLikes(post.getId());
+        response.setTotalLikes(totalLikes);
+        
+        Boolean isLiked = likeService.isLikedByCurrentUser(post.getId());
+        response.setIsLiked(isLiked);
 
         return response;
     }
