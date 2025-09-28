@@ -25,7 +25,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         "AND l.longitude BETWEEN :lonMin AND :lonMax " +
         "AND p.status = 'ACTIVE' " +
         "AND (NULLIF(:category, '') IS NULL OR p.category = :category) " +
-        "AND (CAST(:date AS DATE) IS NULL OR p.date = CAST(:date AS DATE)) " +
+        "AND p.date >= COALESCE(:dateFrom, DATE '1000-01-01') " +
+        "AND p.date <= COALESCE(:dateTo, DATE '2100-12-31') " +
         "AND (:isVerified IS NULL OR p.is_verified = :isVerified) " +
         "AND (:isByIA IS NULL OR p.is_by_ia = :isByIA) " +
         "AND (:userId IS NULL OR p.author_id = :userId) " +
@@ -37,7 +38,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         @Param("lonMin") double lonMin,
         @Param("lonMax") double lonMax,
         @Param("category") String category,
-        @Param("date") LocalDate date,
+        @Param("dateFrom") LocalDate dateFrom,
+        @Param("dateTo") LocalDate dateTo,
         @Param("isVerified") Boolean isVerified,
         @Param("isByIA") Boolean isByIA,
         @Param("userId") Long userId

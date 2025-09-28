@@ -197,7 +197,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date, Boolean isVerified, Boolean isByIA, Long userId) {
+    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date, LocalDate dateFrom, LocalDate dateTo, Boolean isVerified, Boolean isByIA, Long userId) {
 
         // 1. Convertir category string a Category enum
         Category categoryEnum = null;
@@ -210,14 +210,50 @@ public class PostServiceImpl implements PostService {
             }
         }
 
-        // 2. Usar una sola query elegante con filtros opcionales
+        // 2. Determinar el rango de fechas a usar
+        LocalDate finalDateFrom = dateFrom;
+        LocalDate finalDateTo = dateTo;
+        
+        // Si solo se proporciona 'date', crear un rango basado en esa fecha
+        if (date != null && dateFrom == null && dateTo == null) {
+            finalDateFrom = date;
+            finalDateTo = date;
+        }
+
+        // 3. Usar una sola query elegante con filtros opcionales
         String categoryString = (categoryEnum != null) ? categoryEnum.name() : "";
         List<Post> posts = postRepository.findPostsInAreaWithFilters(
-            latMin, latMax, lonMin, lonMax, categoryString, date, isVerified, isByIA, userId
+            latMin, latMax, lonMin, lonMax, categoryString, finalDateFrom, finalDateTo, isVerified, isByIA, userId
         );
 
-        log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, date={}, isVerified={}, isByIA={}, userId={}",
-            posts.size(), latMin, lonMin, latMax, lonMax, category, date, isVerified, isByIA, userId);
+        log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, dateFrom={}, dateTo={}, isVerified={}, isByIA={}, userId={}",
+            posts.size(), latMin, lonMin, latMax, lonMax, category, finalDateFrom, finalDateTo, isVerified, isByIA, userId);
+        
+        // Debug adicional: contar posts sin filtros de área para ver si el problema son las coordenadas
+        if (posts.isEmpty() && finalDateFrom != null && finalDateTo != null) {
+            final LocalDate dateFromForLambda = finalDateFrom;
+            final LocalDate dateToForLambda = finalDateTo;
+            
+            List<Post> allPostsInDateRange = postRepository.findAll().stream()
+                .filter(p -> p.getStatus() == com.mypresentpast.backend.enums.PostStatus.ACTIVE)
+                .filter(p -> p.getDate() != null)
+                .filter(p -> !p.getDate().isBefore(dateFromForLambda) && !p.getDate().isAfter(dateToForLambda))
+                .collect(Collectors.toList());
+            log.info("DEBUG: Encontrados {} posts ACTIVOS en rango de fechas {} a {} (sin filtro de área)", 
+                allPostsInDateRange.size(), finalDateFrom, finalDateTo);
+            
+            if (!allPostsInDateRange.isEmpty()) {
+                Post samplePost = allPostsInDateRange.get(0);
+                if (samplePost.getLocation() != null) {
+                    log.info("DEBUG: Ejemplo de post en rango - ID: {}, Fecha: {}, Coordenadas: ({}, {})", 
+                        samplePost.getId(), samplePost.getDate(), 
+                        samplePost.getLocation().getLatitude(), samplePost.getLocation().getLongitude());
+                } else {
+                    log.info("DEBUG: Ejemplo de post en rango - ID: {}, Fecha: {}, SIN UBICACIÓN", 
+                        samplePost.getId(), samplePost.getDate());
+                }
+            }
+        }
 
         // 3. Convertir a DTOs
         List<PostResponse> postResponses = posts.stream()
