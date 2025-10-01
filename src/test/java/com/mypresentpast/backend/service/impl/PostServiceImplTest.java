@@ -251,16 +251,19 @@ class PostServiceImplTest {
     void getMapData_Success_WithAllFilters() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
+        List<String> categoryStrings = Arrays.asList("STORY");
+        List<Long> userIds = Arrays.asList(1L);
+        
+        when(postRepository.findPostsInAreaWithMultipleFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(LocalDate.class), any(LocalDate.class), any(Boolean.class), any(Boolean.class), any(Long.class)))
+            anyList(), any(LocalDate.class), any(LocalDate.class), any(Boolean.class), any(Boolean.class), anyList()))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(8L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), null, null, true, false, 1L
+            -35.0, -34.0, -59.0, -58.0, "STORY", Arrays.asList("STORY"), LocalDate.now(), null, null, true, false, 1L, Arrays.asList(1L)
         );
 
         // Then
@@ -269,8 +272,8 @@ class PostServiceImplTest {
         assertEquals("Test Post", response.getPosts().get(0).getTitle());
         assertEquals(8L, response.getPosts().get(0).getTotalLikes());
         assertEquals(true, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), LocalDate.now(), true, false, 1L
+        verify(postRepository).findPostsInAreaWithMultipleFilters(
+            -35.0, -34.0, -59.0, -58.0, categoryStrings, LocalDate.now(), LocalDate.now(), true, false, userIds
         );
     }
 
@@ -278,16 +281,16 @@ class PostServiceImplTest {
     void getMapData_Success_WithMinimalParams() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
+        when(postRepository.findPostsInAreaWithMultipleFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), any(), any(), any(), any()))
+            anyList(), any(), any(), any(), any(), anyList()))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(2L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, null, null
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, null, null, null, null
         );
 
         // Then
@@ -295,8 +298,8 @@ class PostServiceImplTest {
         assertEquals(1, response.getPosts().size());
         assertEquals(2L, response.getPosts().get(0).getTotalLikes());
         assertEquals(false, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, null, null, null
+        verify(postRepository).findPostsInAreaWithMultipleFilters(
+            -35.0, -34.0, -59.0, -58.0, new ArrayList<>(), null, null, null, null, new ArrayList<>()
         );
     }
 
@@ -304,16 +307,16 @@ class PostServiceImplTest {
     void getMapData_InvalidCategory_HandledGracefully() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
+        when(postRepository.findPostsInAreaWithMultipleFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            eq(""), any(), any(), any(), any(), any()))
+            eq(new ArrayList<>()), any(), any(), any(), any(), anyList()))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(0L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, "INVALID_CATEGORY", null, null, null, null, null, null
+            -35.0, -34.0, -59.0, -58.0, "INVALID_CATEGORY", null, null, null, null, null, null, null, null
         );
 
         // Then
@@ -321,8 +324,8 @@ class PostServiceImplTest {
         assertEquals(1, response.getPosts().size());
         assertEquals(0L, response.getPosts().get(0).getTotalLikes());
         assertEquals(false, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, null, null, null
+        verify(postRepository).findPostsInAreaWithMultipleFilters(
+            -35.0, -34.0, -59.0, -58.0, new ArrayList<>(), null, null, null, null, new ArrayList<>()
         );
     }
 
@@ -330,16 +333,16 @@ class PostServiceImplTest {
     void getMapData_FilterByVerified() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
+        when(postRepository.findPostsInAreaWithMultipleFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), any(), eq(true), any(), any()))
+            anyList(), any(), any(), eq(true), any(), anyList()))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(12L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, null, true, null, null
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, true, null, null, null
         );
 
         // Then
@@ -347,8 +350,8 @@ class PostServiceImplTest {
         assertEquals(1, response.getPosts().size());
         assertEquals(12L, response.getPosts().get(0).getTotalLikes());
         assertEquals(true, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, true, null, null
+        verify(postRepository).findPostsInAreaWithMultipleFilters(
+            -35.0, -34.0, -59.0, -58.0, new ArrayList<>(), null, null, true, null, new ArrayList<>()
         );
     }
 
@@ -356,16 +359,16 @@ class PostServiceImplTest {
     void getMapData_FilterByIA() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
+        when(postRepository.findPostsInAreaWithMultipleFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), any(), any(), eq(false), any()))
+            anyList(), any(), any(), any(), eq(false), anyList()))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(7L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, false, null
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, null, false, null, null
         );
 
         // Then
@@ -373,8 +376,8 @@ class PostServiceImplTest {
         assertEquals(1, response.getPosts().size());
         assertEquals(7L, response.getPosts().get(0).getTotalLikes());
         assertEquals(false, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, null, false, null
+        verify(postRepository).findPostsInAreaWithMultipleFilters(
+            -35.0, -34.0, -59.0, -58.0, new ArrayList<>(), null, null, null, false, new ArrayList<>()
         );
     }
 
@@ -382,16 +385,18 @@ class PostServiceImplTest {
     void getMapData_FilterByUser() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
+        List<Long> userIds = Arrays.asList(1L);
+        
+        when(postRepository.findPostsInAreaWithMultipleFilters(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), any(), any(), any(), eq(1L)))
+            anyList(), any(), any(), any(), any(), eq(userIds)))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(15L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, null, 1L
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, null, null, 1L, Arrays.asList(1L)
         );
 
         // Then
@@ -400,8 +405,8 @@ class PostServiceImplTest {
         assertEquals("Test Post", response.getPosts().get(0).getTitle());
         assertEquals(15L, response.getPosts().get(0).getTotalLikes());
         assertEquals(true, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, null, null, 1L
+        verify(postRepository).findPostsInAreaWithMultipleFilters(
+            -35.0, -34.0, -59.0, -58.0, new ArrayList<>(), null, null, null, null, userIds
         );
     }
 

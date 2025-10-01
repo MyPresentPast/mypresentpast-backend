@@ -197,17 +197,36 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date, LocalDate dateFrom, LocalDate dateTo, Boolean isVerified, Boolean isByIA, Long userId) {
+    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, List<String> categories, LocalDate date, LocalDate dateFrom, LocalDate dateTo, Boolean isVerified, Boolean isByIA, Long userId, List<Long> userIds) {
 
-        // 1. Convertir category string a Category enum
-        Category categoryEnum = null;
-        if (category != null && !category.isEmpty()) {
+        // 1. Manejar categorías (priorizar 'categories' sobre 'category')
+        List<Category> categoryEnums = new ArrayList<>();
+        
+        // Si se envían múltiples categorías, usarlas
+        if (categories != null && !categories.isEmpty()) {
+            for (String cat : categories) {
+                try {
+                    categoryEnums.add(Category.valueOf(cat.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    log.warn("Categoría inválida: {}", cat);
+                }
+            }
+        } 
+        // Si solo se envía una categoría (compatibilidad hacia atrás)
+        else if (category != null && !category.isEmpty()) {
             try {
-                categoryEnum = Category.valueOf(category.toUpperCase());
+                categoryEnums.add(Category.valueOf(category.toUpperCase()));
             } catch (IllegalArgumentException e) {
                 log.warn("Categoría inválida: {}", category);
-                // Si la categoría es inválida, la dejamos como null
             }
+        }
+        
+        // 1.1. Manejar userIds (priorizar 'userIds' sobre 'userId')
+        List<Long> finalUserIds = new ArrayList<>();
+        if (userIds != null && !userIds.isEmpty()) {
+            finalUserIds.addAll(userIds);
+        } else if (userId != null) {
+            finalUserIds.add(userId);
         }
 
         // 2. Determinar el rango de fechas a usar
@@ -220,10 +239,14 @@ public class PostServiceImpl implements PostService {
             finalDateTo = date;
         }
 
-        // 3. Usar una sola query elegante con filtros opcionales
-        String categoryString = (categoryEnum != null) ? categoryEnum.name() : "";
-        List<Post> posts = postRepository.findPostsInAreaWithFilters(
-            latMin, latMax, lonMin, lonMax, categoryString, finalDateFrom, finalDateTo, isVerified, isByIA, userId
+        // 3. Convertir enums a strings para la consulta SQL
+        List<String> categoryStrings = categoryEnums.stream()
+            .map(Category::name)
+            .collect(java.util.stream.Collectors.toList());
+
+        // 4. Usar una sola query elegante con filtros opcionales
+        List<Post> posts = postRepository.findPostsInAreaWithMultipleFilters(
+            latMin, latMax, lonMin, lonMax, categoryStrings, finalDateFrom, finalDateTo, isVerified, isByIA, finalUserIds
         );
 
         log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, dateFrom={}, dateTo={}, isVerified={}, isByIA={}, userId={}",
