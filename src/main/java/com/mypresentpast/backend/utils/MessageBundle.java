@@ -25,6 +25,8 @@ public class MessageBundle {
     public static final String AVATAR_FILE_REQUIRED = "La imagen es obligatoria para actualizar el avatar";
     public static final String AVATAR_FILE_TOO_LARGE = "La imagen seleccionada supera el tamaño máximo permitido de %d MB.";
     public static final String AVATAR_FILE_INVALID_TYPE = "El formato de la imagen no es válido. Solo se permiten archivos JPEG, PNG o WEBP.";
+    public static final String TOKEN_NOT_FOUND = "Token no encontrado";
+    public static final String TOKEN_EXPIRED = "Token vencido";
 
     // Cloudinary
     public static final String CLOUDINARY_UPLOAD_ERROR = "Ha ocurrido un error al subir la imagen a Cloudinary. Inténtalo nuevamente más tarde.";

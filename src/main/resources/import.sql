@@ -6,9 +6,10 @@
 -- después de crear las tablas (import.sql)
 
 -- 1. USUARIOS
-INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name) VALUES ('mferradans', 'mateo@mail.com', '$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'ADMIN', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400', 'Mateo', 'Ferradans');
-INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name) VALUES ('Museo Nacional Argentino','museo@mail.com', '$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'INSTITUTION', 'https://images.unsplash.com/photo-1566127992631-137a642a90f4?w=400', 'Museo Nacional Argentino', null);
-INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name) VALUES ('Historia Argentina', 'historia@mail.com','$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'NORMAL', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', 'Historia', 'Argentina');
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('mferradans', 'mateo@mail.com', '$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'ADMIN', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400', 'Mateo', 'Ferradans', true);
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('Museo Nacional Argentino','museo@mail.com', '$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'INSTITUTION', 'https://images.unsplash.com/photo-1566127992631-137a642a90f4?w=400', 'Museo Nacional Argentino', null, true);
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('Historia Argentina', 'historia@mail.com','$2a$10$NROW7R3GTc7oPD3O2KuXROOc/uEoah1xABCsxJjafciPvMoWzQU5y', 'NORMAL', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', 'Historia', 'Argentina', true);
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('nmamani', 'nicolas@mail.com', '$2a$10$1dLOmenj4FpldPRYokhQEuXtHCTp1XYcfUWURShFXR.AOE4uuLUNC', 'ADMIN', 'https://images.pexels.com/photos/17811/pexels-photo.jpg?_gl=1*14evu49*_ga*MTE0NDgxNzc3OS4xNzQ0NzYzNDc4*_ga_8JE65Q40S6*czE3NTY4NjIzMzkkbzEwJGcxJHQxNzU2ODYyMzU2JGo0MyRsMCRoMA..', 'Nicolas', 'Mamani', true);
 
 -- 2. UBICACIONES
 INSERT INTO location (address, latitude, longitude) VALUES ('Villa María, Córdoba, Argentina', -32.4075, -63.2406);
@@ -21,6 +22,7 @@ INSERT INTO location (address, latitude, longitude) VALUES ('Bariloche, Río Neg
 INSERT INTO location (address, latitude, longitude) VALUES ('Rosario, Santa Fe, Argentina', -32.9442, -60.6505);
 INSERT INTO location (address, latitude, longitude) VALUES ('Córdoba Capital, Argentina', -31.4201, -64.1888);
 INSERT INTO location (address, latitude, longitude) VALUES ('La Plata, Buenos Aires, Argentina', -34.9205, -57.9536);
+INSERT INTO location (address, latitude, longitude) VALUES ('Bell Ville, Córdoba, Argentina', -32.6284492, -62.8515971);
 
 -- 3. POSTS SOBRE EVENTOS HISTÓRICOS ARGENTINOS
 -- Evento icónico: La nevada en Villa María
@@ -53,6 +55,8 @@ INSERT INTO post (title, content, date, posted_at, is_by_ia, is_verified, catego
 -- Leyendas y mitos argentinos
 INSERT INTO post (title, content, date, posted_at, is_by_ia, is_verified, category, status, author_id, location_id) VALUES ('La Leyenda del Calafate Patagónico', 'Cuenta la leyenda tehuelche que una joven india llamada Calafate se enamoró de un cacique de una tribu enemiga. Cuando su padre se opuso al amor, ella huyó hacia el sur, donde murió de pena. Los dioses, compadecidos, la transformaron en el arbusto de calafate, con frutos dulces de color azul violáceo. Se dice que quien come el fruto del calafate, siempre regresa a la Patagonia.', '1200-01-01', '2024-03-10', false, false, 'MYTH', 'ACTIVE', 1, 6);
 
+INSERT INTO post (title, content, date, posted_at, is_by_ia, is_verified, category, status, author_id, location_id) VALUES ('Puente de la historia', 'En el año 2007, se inaugura el Paseo de la Reconstrucción – Puente de la Historia. Allí se encuentra la réplica de la fuente con la estatua de la Libertad en su centro, inaugurada el 9 de julio de 1916 en la Plaza 25 de Mayo de nuestra ciudad, durante la intendencia de Arturo B. Matterson y demolida en 1924. Tanto la fuente original como la actual redonda, tiene cuatro escudos a su alrededor. Está hecha de cemento y coronada con la estatua de la Libertad, sobre un copón con gárgolas desde donde salen chorros de agua.', '2007-01-01', '2025-09-10', false, false, 'INFORMATION', 'ACTIVE', 4, 11);
+
 -- 4. MEDIA PARA LOS POSTS
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800', 1);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800', 1);
@@ -66,11 +70,16 @@ INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?w=800', 9);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=800', 10);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1520637836862-4d197d17c16a?w=800', 11);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://bellville.gob.ar/wp-content/uploads/2021/12/historia_02.jpg', 12);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://bellville.gob.ar/wp-content/uploads/2021/12/historia_00.jpg', 12);
 
 -- 5. RELACIONES DE SEGUIMIENTO (FOLLOW) - Para probar el sistema
 -- Usuario 1 (mferradans) sigue al Usuario 2 (Museo Nacional)
 INSERT INTO follow (follower_id, followee_id) VALUES (1, 2);
--- Usuario 1 (mferradans) sigue al Usuario 3 (Historia Argentina)  
+-- Usuario 1 (mferradans) sigue al Usuario 3 (Historia Argentina)
 INSERT INTO follow (follower_id, followee_id) VALUES (1, 3);
 -- Usuario 2 (Museo Nacional) sigue al Usuario 3 (Historia Argentina)
 INSERT INTO follow (follower_id, followee_id) VALUES (2, 3);
+-- Usuario 4 (nmamani) sigue al usuario 1 y 2
+INSERT INTO follow (follower_id, followee_id) VALUES (4, 2);
+INSERT INTO follow (follower_id, followee_id) VALUES (4, 1);
