@@ -56,6 +56,66 @@ class ModelTest {
         assertTrue(contains(PostStatus.values(), PostStatus.DELETED));
     }
 
+    @Test
+    void collection_CanBeCreated() {
+        // When
+        Collection collection = new Collection();
+        
+        // Then
+        assertNotNull(collection);
+    }
+
+    @Test
+    void collection_CanBeBuilt() {
+        // Given
+        User author = new User();
+        author.setId(1L);
+        
+        // When
+        Collection collection = Collection.builder()
+                .name("Test Collection")
+                .description("Test Description")
+                .author(author)
+                .build();
+        
+        // Then
+        assertNotNull(collection);
+        assertEquals("Test Collection", collection.getName());
+        assertEquals("Test Description", collection.getDescription());
+        assertEquals(author, collection.getAuthor());
+    }
+
+    @Test
+    void collectionPost_CanBeCreated() {
+        // When
+        CollectionPost collectionPost = new CollectionPost();
+        
+        // Then
+        assertNotNull(collectionPost);
+    }
+
+    @Test
+    void collectionPost_CanBeBuilt() {
+        // Given
+        Collection collection = new Collection();
+        collection.setId(1L);
+        
+        Post post = new Post();
+        post.setId(1L);
+        
+        // When
+        CollectionPost collectionPost = CollectionPost.builder()
+                .collection(collection)
+                .post(post)
+                .build();
+        
+        // Then
+        assertNotNull(collectionPost);
+        assertEquals(collection, collectionPost.getCollection());
+        assertEquals(post, collectionPost.getPost());
+        assertNotNull(collectionPost.getAddedAt());
+    }
+
     private boolean contains(Object[] array, Object value) {
         for (Object item : array) {
             if (item.equals(value)) {

@@ -33,4 +33,6 @@ public class PostResponse {
     private LocationDto location;
     private PostStatus status;
     private List<MediaDto> media;
+    private Long totalLikes;
+    private Boolean isLiked;
 }

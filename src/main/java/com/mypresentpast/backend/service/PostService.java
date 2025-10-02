@@ -40,6 +40,13 @@ public interface PostService {
     List<PostResponse> getPostsByUser(Long id);
 
     /**
+     * Obtener publicaciones que el usuario actual ha likeado.
+     *
+     * @return las publicaciones likeadas por el usuario actual
+     */
+    List<PostResponse> getLikedPostsByCurrentUser();
+
+    /**
      * Obtener datos para el mapa con filtros.
      * Devuelve todos los posts en el área especificada.
      *
@@ -55,7 +62,8 @@ public interface PostService {
      * @return lista completa de posts en el área
      */
     MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax,
-                           String category, LocalDate date, Boolean isVerified, Boolean isByIA, Long userId);
+                          String category, List<String> categories, LocalDate date, LocalDate dateFrom, LocalDate dateTo, 
+                          Boolean isVerified, Boolean isByIA, Long userId, List<Long> userIds);
 
     /**
      * Obtener una publicación aleatoria.

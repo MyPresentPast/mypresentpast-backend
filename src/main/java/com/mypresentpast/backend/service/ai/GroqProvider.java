@@ -56,6 +56,7 @@ public class GroqProvider implements AIProvider {
             "4. NUNCA cambies palabras de slang argentino (ej: 'sarpado' significa 'increíble')\n" +
             "5. Si una palabra está mal escrita pero entiendes qué quiso decir, corrígela EXACTAMENTE\n" +
             "6. Si no estás 100% seguro, NO toques la palabra\n\n" +
+            "7. Que no se permitan malas palabras u ofensivas.\n\n" +
             "EJEMPLOS CORRECTOS:\n" +
             "- 'nevo' → 'nevó' (falta tilde)\n" +
             "- 'ermano' → 'hermano' (falta h)\n" +

@@ -49,15 +49,15 @@ public class PostControllerImpl implements PostController {
     @Override
     public ResponseEntity<MapResponse> getMapData(
         double latMin, double latMax, double lonMin, double lonMax,
-        String category, LocalDate date, Boolean isVerified, Boolean isByIA, Long userId) {
+        String category, List<String> categories, LocalDate date, LocalDate dateFrom, LocalDate dateTo, 
+        Boolean isVerified, Boolean isByIA, Long userId, List<Long> userIds) {
 
-        if (date != null && date.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("No se pueden consultar fechas futuras");
-        }
+        // Permitir consultas de cualquier fecha (pasado, presente y futuro)
+        // Esta es una aplicación de historia donde se pueden crear posts con fechas históricas o futuras
 
         MapResponse response = postService.getMapData(
             latMin, latMax, lonMin, lonMax,
-            category, date, isVerified, isByIA, userId
+            category, categories, date, dateFrom, dateTo, isVerified, isByIA, userId, userIds
         );
         return ResponseEntity.ok(response);
     }

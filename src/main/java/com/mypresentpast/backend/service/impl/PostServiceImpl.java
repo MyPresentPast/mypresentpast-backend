@@ -21,7 +21,9 @@ import com.mypresentpast.backend.repository.MediaRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
+import com.mypresentpast.backend.service.LikeService;
 import com.mypresentpast.backend.service.PostService;
+import com.mypresentpast.backend.utils.SecurityUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,7 @@ public class PostServiceImpl implements PostService {
     private final LocationRepository locationRepository;
     private final MediaRepository mediaRepository;
     private final CloudinaryService cloudinaryService;
+    private final LikeService likeService;
 
     @Override
     public ApiResponse createPost(CreatePostRequest request, List<MultipartFile> images) {
@@ -174,27 +177,106 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, LocalDate date, Boolean isVerified, Boolean isByIA, Long userId) {
+    public List<PostResponse> getLikedPostsByCurrentUser() {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        List<Post> likedPosts = postRepository.findLikedPostsByUserId(currentUserId);
 
-        // 1. Convertir category string a Category enum
-        Category categoryEnum = null;
-        if (category != null && !category.isEmpty()) {
-            try {
-                categoryEnum = Category.valueOf(category.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                log.warn("Categoría inválida: {}", category);
-                // Si la categoría es inválida, la dejamos como null
-            }
+        if (likedPosts.isEmpty()) {
+            log.info("Usuario {} no tiene posts likeados", currentUserId);
+            return new ArrayList<>();
         }
 
-        // 2. Usar una sola query elegante con filtros opcionales
-        String categoryString = (categoryEnum != null) ? categoryEnum.name() : "";
-        List<Post> posts = postRepository.findPostsInAreaWithFilters(
-            latMin, latMax, lonMin, lonMax, categoryString, date, isVerified, isByIA, userId
+        List<PostResponse> postResponses = new ArrayList<>();
+        for (Post post : likedPosts) {
+            postResponses.add(mapToPostResponse(post));
+        }
+
+        log.info("Usuario {} tiene {} posts likeados", currentUserId, postResponses.size());
+        return postResponses;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, List<String> categories, LocalDate date, LocalDate dateFrom, LocalDate dateTo, Boolean isVerified, Boolean isByIA, Long userId, List<Long> userIds) {
+
+        // 1. Manejar categorías (priorizar 'categories' sobre 'category')
+        List<Category> categoryEnums = new ArrayList<>();
+        
+        // Si se envían múltiples categorías, usarlas
+        if (categories != null && !categories.isEmpty()) {
+            for (String cat : categories) {
+                try {
+                    categoryEnums.add(Category.valueOf(cat.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    log.warn("Categoría inválida: {}", cat);
+                }
+            }
+        } 
+        // Si solo se envía una categoría (compatibilidad hacia atrás)
+        else if (category != null && !category.isEmpty()) {
+            try {
+                categoryEnums.add(Category.valueOf(category.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Categoría inválida: {}", category);
+            }
+        }
+        
+        // 1.1. Manejar userIds (priorizar 'userIds' sobre 'userId')
+        List<Long> finalUserIds = new ArrayList<>();
+        if (userIds != null && !userIds.isEmpty()) {
+            finalUserIds.addAll(userIds);
+        } else if (userId != null) {
+            finalUserIds.add(userId);
+        }
+
+        // 2. Determinar el rango de fechas a usar
+        LocalDate finalDateFrom = dateFrom;
+        LocalDate finalDateTo = dateTo;
+        
+        // Si solo se proporciona 'date', crear un rango basado en esa fecha
+        if (date != null && dateFrom == null && dateTo == null) {
+            finalDateFrom = date;
+            finalDateTo = date;
+        }
+
+        // 3. Convertir enums a strings para la consulta SQL
+        List<String> categoryStrings = categoryEnums.stream()
+            .map(Category::name)
+            .collect(java.util.stream.Collectors.toList());
+
+        // 4. Usar una sola query elegante con filtros opcionales
+        List<Post> posts = postRepository.findPostsInAreaWithMultipleFilters(
+            latMin, latMax, lonMin, lonMax, categoryStrings, finalDateFrom, finalDateTo, isVerified, isByIA, finalUserIds
         );
 
-        log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, date={}, isVerified={}, isByIA={}, userId={}",
-            posts.size(), latMin, lonMin, latMax, lonMax, category, date, isVerified, isByIA, userId);
+        log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, dateFrom={}, dateTo={}, isVerified={}, isByIA={}, userId={}",
+            posts.size(), latMin, lonMin, latMax, lonMax, category, finalDateFrom, finalDateTo, isVerified, isByIA, userId);
+        
+        // Debug adicional: contar posts sin filtros de área para ver si el problema son las coordenadas
+        if (posts.isEmpty() && finalDateFrom != null && finalDateTo != null) {
+            final LocalDate dateFromForLambda = finalDateFrom;
+            final LocalDate dateToForLambda = finalDateTo;
+            
+            List<Post> allPostsInDateRange = postRepository.findAll().stream()
+                .filter(p -> p.getStatus() == com.mypresentpast.backend.enums.PostStatus.ACTIVE)
+                .filter(p -> p.getDate() != null)
+                .filter(p -> !p.getDate().isBefore(dateFromForLambda) && !p.getDate().isAfter(dateToForLambda))
+                .collect(Collectors.toList());
+            log.info("DEBUG: Encontrados {} posts ACTIVOS en rango de fechas {} a {} (sin filtro de área)", 
+                allPostsInDateRange.size(), finalDateFrom, finalDateTo);
+            
+            if (!allPostsInDateRange.isEmpty()) {
+                Post samplePost = allPostsInDateRange.get(0);
+                if (samplePost.getLocation() != null) {
+                    log.info("DEBUG: Ejemplo de post en rango - ID: {}, Fecha: {}, Coordenadas: ({}, {})", 
+                        samplePost.getId(), samplePost.getDate(), 
+                        samplePost.getLocation().getLatitude(), samplePost.getLocation().getLongitude());
+                } else {
+                    log.info("DEBUG: Ejemplo de post en rango - ID: {}, Fecha: {}, SIN UBICACIÓN", 
+                        samplePost.getId(), samplePost.getDate());
+                }
+            }
+        }
 
         // 3. Convertir a DTOs
         List<PostResponse> postResponses = posts.stream()
@@ -472,6 +554,12 @@ public class PostServiceImpl implements PostService {
         } else {
             response.setMedia(new ArrayList<>());
         }
+
+        Long totalLikes = likeService.getTotalLikes(post.getId());
+        response.setTotalLikes(totalLikes);
+        
+        Boolean isLiked = likeService.isLikedByCurrentUser(post.getId());
+        response.setIsLiked(isLiked);
 
         return response;
     }

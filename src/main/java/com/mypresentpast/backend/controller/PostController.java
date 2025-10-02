@@ -76,10 +76,14 @@ public interface PostController {
         @RequestParam double lonMin,
         @RequestParam double lonMax,
         @RequestParam(required = false) String category,
+        @RequestParam(required = false) List<String> categories,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
         @RequestParam(required = false) Boolean isVerified,
         @RequestParam(required = false) Boolean isByIA,
-        @RequestParam(required = false) Long userId
+        @RequestParam(required = false) Long userId,
+        @RequestParam(required = false) List<Long> userIds
     );
 
     /**
