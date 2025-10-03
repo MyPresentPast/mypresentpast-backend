@@ -160,7 +160,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostResponse> getPostsByUser(final Long id) {
-        List<Post> posts = postRepository.findByAuthorId(id);
+        // Buscar solo posts activos del usuario
+        List<Post> posts = postRepository.findByAuthorIdAndStatus(id, PostStatus.ACTIVE);
 
         if (posts.isEmpty()) {
             throw new ResourceNotFoundException("No hay publicaciones disponibles para mostrar");

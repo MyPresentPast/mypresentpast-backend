@@ -86,6 +86,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * Busca posts por usuario.
      */
     List<Post> findByAuthorId(Long id);
+    
+    /**
+     * Busca posts activos por usuario.
+     */
+    List<Post> findByAuthorIdAndStatus(Long authorId, PostStatus status);
 
     /**
      * Cuenta el número de posts activos de un usuario.
