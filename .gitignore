@@ -85,4 +85,6 @@ Desktop.ini
 
 # Application properties (sensitive data)
 application-dev.properties
-application-prod.properties 
+application-prod.properties
+
+email.properties
