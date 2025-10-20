@@ -199,11 +199,12 @@ INSERT INTO collection_post (collection_id, post_id, added_at) VALUES (3, 11, '2
 INSERT INTO collection_post (collection_id, post_id, added_at) VALUES (3, 12, '2024-02-16 16:00:00');
 
 -- 9. VERIFICACIONES DE POSTS (SISTEMA DE VERIFICACIÓN)
--- La institución 'Museo Nacional Argentino' (ID=2) verifica algunos posts de usuarios normales
-INSERT INTO post_verification (post_id, verified_by_id, verified_at, is_active) VALUES (6, 2, '2024-02-01 10:00:00', true);
-INSERT INTO post_verification (post_id, verified_by_id, verified_at, is_active) VALUES (13, 2, '2024-03-02 10:00:00', true);
-INSERT INTO post_verification (post_id, verified_by_id, verified_at, is_active) VALUES (15, 2, '2024-03-11 10:00:00', true);
+-- IMPORTANTE: Los posts creados por instituciones (usuarios 2 y 4) están auto-verificados por lógica del backend
+-- Solo incluimos verificaciones EXTERNAS de posts creados por usuarios NORMALES (usuarios 1 y 3)
 
--- La institución 'Universidad Nacional' (ID=4) verifica otros posts
-INSERT INTO post_verification (post_id, verified_by_id, verified_at, is_active) VALUES (22, 4, '2024-02-16 10:00:00', true);
-INSERT INTO post_verification (post_id, verified_by_id, verified_at, is_active) VALUES (25, 4, '2024-03-02 10:00:00', true);
+-- La institución 'Museo Nacional Argentino' (ID=2) verifica posts de usuarios normales
+INSERT INTO post_verification (post_id, verified_by_id, verified_at, is_active) VALUES (6, 2, '2024-02-01 10:00:00', true);   -- Post de usuario 3 verificado por institución 2
+INSERT INTO post_verification (post_id, verified_by_id, verified_at, is_active) VALUES (15, 2, '2024-03-11 10:00:00', true); -- Post de usuario 1 verificado por institución 2
+
+-- La institución 'Universidad Nacional' (ID=4) verifica posts de usuarios normales
+INSERT INTO post_verification (post_id, verified_by_id, verified_at, is_active) VALUES (7, 4, '2024-02-16 10:00:00', true);  -- Post de usuario 1 verificado por institución 4
