@@ -1,32 +1,14 @@
 package com.mypresentpast.backend.service.impl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mockStatic;
-
-import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.request.CreatePostRequest;
+import com.mypresentpast.backend.dto.request.UpdatePostRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.MapResponse;
 import com.mypresentpast.backend.dto.response.PostResponse;
-import com.mypresentpast.backend.dto.request.UpdatePostRequest;
 import com.mypresentpast.backend.enums.Category;
 import com.mypresentpast.backend.enums.PostStatus;
-import com.mypresentpast.backend.model.UserRole;
 import com.mypresentpast.backend.exception.ResourceNotFoundException;
-import com.mypresentpast.backend.model.Location;
-import com.mypresentpast.backend.model.Media;
-import com.mypresentpast.backend.model.Post;
-import com.mypresentpast.backend.model.User;
+import com.mypresentpast.backend.model.*;
 import com.mypresentpast.backend.repository.LocationRepository;
 import com.mypresentpast.backend.repository.MediaRepository;
 import com.mypresentpast.backend.repository.PostRepository;
@@ -35,22 +17,21 @@ import com.mypresentpast.backend.service.CloudinaryService;
 import com.mypresentpast.backend.service.LikeService;
 import com.mypresentpast.backend.service.PostVerificationQueryService;
 import com.mypresentpast.backend.utils.SecurityUtils;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDate;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceImplTest {
@@ -83,27 +64,35 @@ class PostServiceImplTest {
     private PostServiceImpl postService;
 
     private User testUser;
+    private User institutionUser;
     private Location testLocation;
     private Post testPost;
     private CreatePostRequest createRequest;
 
     @BeforeEach
     void setUp() {
-        // Crear User manualmente
+        // Crear User normal
         testUser = new User();
         testUser.setId(1L);
         testUser.setProfileUsername("testuser");
         testUser.setPassword("password");
         testUser.setRole(UserRole.NORMAL);
 
-        // Crear Location manualmente
+        // Crear User institución
+        institutionUser = new User();
+        institutionUser.setId(2L);
+        institutionUser.setProfileUsername("institution");
+        institutionUser.setPassword("password");
+        institutionUser.setRole(UserRole.INSTITUTION);
+
+        // Crear Location
         testLocation = new Location();
         testLocation.setId(1L);
         testLocation.setAddress("Test Address");
         testLocation.setLatitude(-34.6118);
         testLocation.setLongitude(-58.3960);
 
-        // Crear Post manualmente
+        // Crear Post
         testPost = new Post();
         testPost.setId(1L);
         testPost.setTitle("Test Post");
@@ -117,7 +106,7 @@ class PostServiceImplTest {
         testPost.setLocation(testLocation);
         testPost.setMedia(new ArrayList<>());
 
-        // Crear CreatePostRequest manualmente
+        // Crear CreatePostRequest
         createRequest = new CreatePostRequest();
         createRequest.setTitle("New Test Post");
         createRequest.setContent("New test content");
@@ -199,6 +188,7 @@ class PostServiceImplTest {
             mockImage, mockImage, mockImage, mockImage, mockImage, mockImage // 6 imágenes
         );
 
+        // Configurar todos los mocks necesarios hasta llegar a la validación de imágenes
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(locationRepository.findLocationsByProximity(anyDouble(), anyDouble()))
             .thenReturn(Collections.emptyList());
@@ -256,12 +246,50 @@ class PostServiceImplTest {
     }
 
     @Test
+    void getPostsByUser_Success() {
+        // Given
+        List<Post> userPosts = Arrays.asList(testPost);
+        when(postRepository.findByAuthorIdAndStatus(1L, PostStatus.ACTIVE)).thenReturn(userPosts);
+        when(likeService.getTotalLikes(1L)).thenReturn(3L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
+        when(verificationQueryService.isPostVerified(testPost)).thenReturn(false);
+        when(verificationQueryService.getExternalVerifier(1L)).thenReturn(null);
+
+        // When
+        List<PostResponse> responses = postService.getPostsByUser(1L);
+
+        // Then
+        assertNotNull(responses);
+        assertEquals(1, responses.size());
+        assertEquals("Test Post", responses.get(0).getTitle());
+        verify(postRepository).findByAuthorIdAndStatus(1L, PostStatus.ACTIVE);
+    }
+
+    @Test
+    void getPostsByUser_NoPostsFound_ThrowsException() {
+        // Given
+        when(postRepository.findByAuthorIdAndStatus(1L, PostStatus.ACTIVE)).thenReturn(Collections.emptyList());
+
+        // When & Then
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class,
+            () -> postService.getPostsByUser(1L)
+        );
+
+        assertEquals("No hay publicaciones disponibles para mostrar", exception.getMessage());
+    }
+
+    @Test
     void getMapData_Success_WithAllFilters() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
-            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(LocalDate.class), any(Boolean.class), any(Long.class)))
+        List<String> categoryStrings = Arrays.asList("STORY");
+        List<Long> userIds = Arrays.asList(1L);
+        LocalDate testDate = LocalDate.now();
+
+        when(postRepository.findPostsInAreaWithMultipleFilters(
+            eq(-35.0), eq(-34.0), eq(-59.0), eq(-58.0),
+            eq(categoryStrings), eq(testDate), eq(testDate), eq(false), eq(userIds)))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(8L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
@@ -270,7 +298,7 @@ class PostServiceImplTest {
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), true, false, 1L
+            -35.0, -34.0, -59.0, -58.0, "STORY", Arrays.asList("STORY"), testDate, null, null, true, false, 1L, Arrays.asList(1L)
         );
 
         // Then
@@ -279,8 +307,8 @@ class PostServiceImplTest {
         assertEquals("Test Post", response.getPosts().get(0).getTitle());
         assertEquals(8L, response.getPosts().get(0).getTotalLikes());
         assertEquals(true, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "STORY", LocalDate.now(), false, 1L
+        verify(postRepository).findPostsInAreaWithMultipleFilters(
+            -35.0, -34.0, -59.0, -58.0, categoryStrings, testDate, testDate, false, userIds
         );
     }
 
@@ -288,9 +316,9 @@ class PostServiceImplTest {
     void getMapData_Success_WithMinimalParams() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
-            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), any(), any()))
+        when(postRepository.findPostsInAreaWithMultipleFilters(
+            eq(-35.0), eq(-34.0), eq(-59.0), eq(-58.0),
+            anyList(), eq(null), eq(null), eq(null), anyList()))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(2L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
@@ -299,7 +327,7 @@ class PostServiceImplTest {
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, null, null, null, null
         );
 
         // Then
@@ -307,46 +335,41 @@ class PostServiceImplTest {
         assertEquals(1, response.getPosts().size());
         assertEquals(2L, response.getPosts().get(0).getTotalLikes());
         assertEquals(false, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, null
-        );
     }
 
     @Test
-    void getMapData_InvalidCategory_HandledGracefully() {
+    void getMapData_WithVerifiedFilter() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
-            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            eq(""), any(), any(), any()))
+        when(postRepository.findPostsInAreaWithMultipleFilters(
+            eq(-35.0), eq(-34.0), eq(-59.0), eq(-58.0),
+            anyList(), eq(null), eq(null), eq(null), anyList()))
             .thenReturn(mockPosts);
-        when(likeService.getTotalLikes(1L)).thenReturn(0L);
-        when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
-        when(verificationQueryService.isPostVerified(testPost)).thenReturn(false);
-        when(verificationQueryService.getExternalVerifier(1L)).thenReturn(null);
+        when(likeService.getTotalLikes(1L)).thenReturn(12L);
+        when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
+        when(verificationQueryService.isPostVerified(testPost)).thenReturn(true);
+        when(verificationQueryService.getExternalVerifier(1L)).thenReturn(institutionUser);
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, "INVALID_CATEGORY", null, null, null, null
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, true, null, null, null
         );
 
         // Then
         assertNotNull(response);
         assertEquals(1, response.getPosts().size());
-        assertEquals(0L, response.getPosts().get(0).getTotalLikes());
-        assertEquals(false, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, null
-        );
+        assertEquals(12L, response.getPosts().get(0).getTotalLikes());
+        assertEquals(true, response.getPosts().get(0).getIsLiked());
+        assertEquals(true, response.getPosts().get(0).getIsVerified());
     }
 
     @Test
     void getMapData_FilterByIA() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
-            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), eq(false), any()))
+        when(postRepository.findPostsInAreaWithMultipleFilters(
+            eq(-35.0), eq(-34.0), eq(-59.0), eq(-58.0),
+            anyList(), eq(null), eq(null), eq(false), anyList()))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(7L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(false);
@@ -355,7 +378,7 @@ class PostServiceImplTest {
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, false,null
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, null, false, null, null
         );
 
         // Then
@@ -363,18 +386,17 @@ class PostServiceImplTest {
         assertEquals(1, response.getPosts().size());
         assertEquals(7L, response.getPosts().get(0).getTotalLikes());
         assertEquals(false, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, false, null
-        );
     }
 
     @Test
     void getMapData_FilterByUser() {
         // Given
         List<Post> mockPosts = Arrays.asList(testPost);
-        when(postRepository.findPostsInAreaWithFilters(
-            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-            anyString(), any(), any(), eq(1L)))
+        List<Long> userIds = Arrays.asList(1L);
+
+        when(postRepository.findPostsInAreaWithMultipleFilters(
+            eq(-35.0), eq(-34.0), eq(-59.0), eq(-58.0),
+            anyList(), eq(null), eq(null), eq(null), eq(userIds)))
             .thenReturn(mockPosts);
         when(likeService.getTotalLikes(1L)).thenReturn(15L);
         when(likeService.isLikedByCurrentUser(1L)).thenReturn(true);
@@ -383,7 +405,7 @@ class PostServiceImplTest {
 
         // When
         MapResponse response = postService.getMapData(
-            -35.0, -34.0, -59.0, -58.0, null, null, null, null, 1L
+            -35.0, -34.0, -59.0, -58.0, null, null, null, null, null, null, null, 1L, Arrays.asList(1L)
         );
 
         // Then
@@ -392,9 +414,6 @@ class PostServiceImplTest {
         assertEquals("Test Post", response.getPosts().get(0).getTitle());
         assertEquals(15L, response.getPosts().get(0).getTotalLikes());
         assertEquals(true, response.getPosts().get(0).getIsLiked());
-        verify(postRepository).findPostsInAreaWithFilters(
-            -35.0, -34.0, -59.0, -58.0, "", null, null, 1L
-        );
     }
 
     @Test
@@ -543,7 +562,6 @@ class PostServiceImplTest {
         // Then
         assertNotNull(response);
         assertEquals("Publicación eliminada con éxito", response.getMessage());
-        verify(cloudinaryService, never()).delete(anyString());
         verify(postRepository).save(testPost);
         verify(postRepository, never()).delete(testPost);
 

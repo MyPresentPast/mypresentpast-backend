@@ -62,7 +62,8 @@ public interface PostService {
      * @return lista completa de posts en el área
      */
     MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax,
-                           String category, LocalDate date, Boolean isVerified, Boolean isByIA, Long userId);
+                          String category, List<String> categories, LocalDate date, LocalDate dateFrom, LocalDate dateTo, 
+                          Boolean isVerified, Boolean isByIA, Long userId, List<Long> userIds);
 
     /**
      * Obtener una publicación aleatoria.
