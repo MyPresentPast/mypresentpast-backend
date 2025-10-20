@@ -2,7 +2,9 @@ package com.mypresentpast.backend.controller.impl;
 
 import com.mypresentpast.backend.controller.AIController;
 import com.mypresentpast.backend.dto.request.CorrectContentRequest;
+import com.mypresentpast.backend.dto.request.GeneratePostRequest;
 import com.mypresentpast.backend.dto.response.CorrectContentResponse;
+import com.mypresentpast.backend.dto.response.GeneratePostResponse;
 import com.mypresentpast.backend.service.AIService;
 import com.mypresentpast.backend.service.ai.OpenAIProvider;
 import java.util.HashMap;
@@ -30,6 +32,14 @@ public class AIControllerImpl implements AIController {
     public ResponseEntity<CorrectContentResponse> correctContent(CorrectContentRequest request) {
         log.info("Solicitud de corrección de contenido recibida");
         CorrectContentResponse response = aiService.correctContent(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<GeneratePostResponse> generatePost(GeneratePostRequest request) {
+        log.info("Solicitud de generación de publicación recibida: fecha={}, ubicación={}", 
+            request.getDate(), request.getAddress());
+        GeneratePostResponse response = aiService.generatePost(request);
         return ResponseEntity.ok(response);
     }
     
