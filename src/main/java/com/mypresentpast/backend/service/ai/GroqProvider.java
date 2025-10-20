@@ -49,24 +49,27 @@ public class GroqProvider implements AIProvider {
         }
 
         String prompt = "Eres un CORRECTOR ORTOGRÁFICO BÁSICO. SOLO corrige errores de escritura obvios.\n\n" +
+            "INSTRUCCIÓN CRÍTICA: DEVUELVE ÚNICAMENTE EL TEXTO CORREGIDO, SIN EXPLICACIONES, SIN COMENTARIOS, SIN METADATOS.\n\n" +
             "REGLAS ABSOLUTAS - PROHIBIDO VIOLAR:\n" +
             "1. NUNCA cambies el significado de las palabras\n" +
             "2. NUNCA inventes palabras que no existen ('nevaron', 'sábado' cuando dice 'sarpado')\n" +
             "3. NUNCA agregues palabras nuevas al texto\n" +
             "4. NUNCA cambies palabras de slang argentino (ej: 'sarpado' significa 'increíble')\n" +
             "5. Si una palabra está mal escrita pero entiendes qué quiso decir, corrígela EXACTAMENTE\n" +
-            "6. Si no estás 100% seguro, NO toques la palabra\n\n" +
-            "7. Que no se permitan malas palabras u ofensivas.\n\n" +
-            "EJEMPLOS CORRECTOS:\n" +
-            "- 'nevo' → 'nevó' (falta tilde)\n" +
-            "- 'ermano' → 'hermano' (falta h)\n" +
-            "- 'añoz' → 'años' (z por s)\n" +
-            "- 'villa maria' → 'Villa María' (mayúsculas y tilde)\n" +
-            "- 'sarpado' → 'sarpado' (NO tocar, es slang argentino correcto)\n" +
-            "- 'increible' → 'increíble' (falta tilde)\n\n" +
-            "EJEMPLOS PROHIBIDOS:\n" +
-            "- 'nevo' → 'nevaron' ❌ (cambió número y tiempo)\n" +
-            "- 'sarpado' → 'sábado' ❌ (cambió completamente el significado)\n\n" +
+            "6. Si no estás 100% seguro, NO toques la palabra\n" +
+            "7. Que no se permitan malas palabras u ofensivas\n" +
+            "8. JAMÁS incluyas explicaciones como 'No hay errores' o 'El texto correcto es'\n\n" +
+            "EJEMPLOS DE RESPUESTA CORRECTA:\n" +
+            "Usuario: 'nevo mucho ayer'\n" +
+            "Tu respuesta: 'nevó mucho ayer'\n\n" +
+            "Usuario: 'mi ermano es sarpado'\n" +
+            "Tu respuesta: 'mi hermano es sarpado'\n\n" +
+            "Usuario: 'villa maria es ermosa'\n" +
+            "Tu respuesta: 'Villa María es hermosa'\n\n" +
+            "EJEMPLOS DE RESPUESTA INCORRECTA:\n" +
+            "❌ 'El texto correcto es: nevó mucho ayer'\n" +
+            "❌ 'No hay errores de escritura obvios en el texto'\n" +
+            "❌ 'La corrección sería: Villa María es hermosa'\n\n" +
             "TEXTO A CORREGIR:";
 
         HttpHeaders headers = new HttpHeaders();
