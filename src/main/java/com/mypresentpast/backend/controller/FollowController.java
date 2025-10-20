@@ -78,7 +78,7 @@ public interface FollowController {
      * @param userId ID del usuario a verificar
      * @return true si lo sigue, false si no
      */
-    @GetMapping("/status/{userId}")
+    @GetMapping("/is-following/{userId}")
     ResponseEntity<Boolean> isFollowing(@PathVariable Long userId);
 
     /**
