@@ -23,18 +23,20 @@ import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
 import com.mypresentpast.backend.service.LikeService;
 import com.mypresentpast.backend.service.PostService;
+import com.mypresentpast.backend.service.PostVerificationQueryService;
 import com.mypresentpast.backend.utils.SecurityUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Implementación del servicio de Post.
@@ -51,6 +53,7 @@ public class PostServiceImpl implements PostService {
     private final MediaRepository mediaRepository;
     private final CloudinaryService cloudinaryService;
     private final LikeService likeService;
+    private final PostVerificationQueryService verificationQueryService;
 
     @Override
     public ApiResponse createPost(CreatePostRequest request, List<MultipartFile> images) {
@@ -71,7 +74,6 @@ public class PostServiceImpl implements PostService {
             .postedAt(LocalDate.now())
             .category(request.getCategory())
             .isByIA(request.getIsByIA())
-            .isVerified(false) // Por defecto los posts nuevos no están verificados
             .status(PostStatus.ACTIVE)
             .author(author)
             .location(location)
@@ -153,8 +155,9 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PostResponse getPostById(Long id) {
-        Post post = postRepository.findById(id)
+        Post post = postRepository.findByIdWithRelations(id)
             .orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada con id: " + id));
+
         return mapToPostResponse(post);
     }
 
@@ -196,13 +199,12 @@ public class PostServiceImpl implements PostService {
         return postResponses;
     }
 
-    @Override
     @Transactional(readOnly = true)
     public MapResponse getMapData(double latMin, double latMax, double lonMin, double lonMax, String category, List<String> categories, LocalDate date, LocalDate dateFrom, LocalDate dateTo, Boolean isVerified, Boolean isByIA, Long userId, List<Long> userIds) {
 
         // 1. Manejar categorías (priorizar 'categories' sobre 'category')
         List<Category> categoryEnums = new ArrayList<>();
-        
+
         // Si se envían múltiples categorías, usarlas
         if (categories != null && !categories.isEmpty()) {
             for (String cat : categories) {
@@ -212,7 +214,7 @@ public class PostServiceImpl implements PostService {
                     log.warn("Categoría inválida: {}", cat);
                 }
             }
-        } 
+        }
         // Si solo se envía una categoría (compatibilidad hacia atrás)
         else if (category != null && !category.isEmpty()) {
             try {
@@ -221,7 +223,7 @@ public class PostServiceImpl implements PostService {
                 log.warn("Categoría inválida: {}", category);
             }
         }
-        
+
         // 1.1. Manejar userIds (priorizar 'userIds' sobre 'userId')
         List<Long> finalUserIds = new ArrayList<>();
         if (userIds != null && !userIds.isEmpty()) {
@@ -233,7 +235,7 @@ public class PostServiceImpl implements PostService {
         // 2. Determinar el rango de fechas a usar
         LocalDate finalDateFrom = dateFrom;
         LocalDate finalDateTo = dateTo;
-        
+
         // Si solo se proporciona 'date', crear un rango basado en esa fecha
         if (date != null && dateFrom == null && dateTo == null) {
             finalDateFrom = date;
@@ -242,38 +244,38 @@ public class PostServiceImpl implements PostService {
 
         // 3. Convertir enums a strings para la consulta SQL
         List<String> categoryStrings = categoryEnums.stream()
-            .map(Category::name)
-            .collect(java.util.stream.Collectors.toList());
+                .map(Category::name)
+                .collect(java.util.stream.Collectors.toList());
 
         // 4. Usar una sola query elegante con filtros opcionales
         List<Post> posts = postRepository.findPostsInAreaWithMultipleFilters(
-            latMin, latMax, lonMin, lonMax, categoryStrings, finalDateFrom, finalDateTo, isVerified, isByIA, finalUserIds
+                latMin, latMax, lonMin, lonMax, categoryStrings, finalDateFrom, finalDateTo, isByIA, finalUserIds
         );
 
         log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, dateFrom={}, dateTo={}, isVerified={}, isByIA={}, userId={}",
             posts.size(), latMin, lonMin, latMax, lonMax, category, finalDateFrom, finalDateTo, isVerified, isByIA, userId);
-        
+
         // Debug adicional: contar posts sin filtros de área para ver si el problema son las coordenadas
         if (posts.isEmpty() && finalDateFrom != null && finalDateTo != null) {
             final LocalDate dateFromForLambda = finalDateFrom;
             final LocalDate dateToForLambda = finalDateTo;
-            
+
             List<Post> allPostsInDateRange = postRepository.findAll().stream()
                 .filter(p -> p.getStatus() == com.mypresentpast.backend.enums.PostStatus.ACTIVE)
                 .filter(p -> p.getDate() != null)
                 .filter(p -> !p.getDate().isBefore(dateFromForLambda) && !p.getDate().isAfter(dateToForLambda))
                 .collect(Collectors.toList());
-            log.info("DEBUG: Encontrados {} posts ACTIVOS en rango de fechas {} a {} (sin filtro de área)", 
+            log.info("DEBUG: Encontrados {} posts ACTIVOS en rango de fechas {} a {} (sin filtro de área)",
                 allPostsInDateRange.size(), finalDateFrom, finalDateTo);
-            
+
             if (!allPostsInDateRange.isEmpty()) {
                 Post samplePost = allPostsInDateRange.get(0);
                 if (samplePost.getLocation() != null) {
-                    log.info("DEBUG: Ejemplo de post en rango - ID: {}, Fecha: {}, Coordenadas: ({}, {})", 
-                        samplePost.getId(), samplePost.getDate(), 
+                    log.info("DEBUG: Ejemplo de post en rango - ID: {}, Fecha: {}, Coordenadas: ({}, {})",
+                        samplePost.getId(), samplePost.getDate(),
                         samplePost.getLocation().getLatitude(), samplePost.getLocation().getLongitude());
                 } else {
-                    log.info("DEBUG: Ejemplo de post en rango - ID: {}, Fecha: {}, SIN UBICACIÓN", 
+                    log.info("DEBUG: Ejemplo de post en rango - ID: {}, Fecha: {}, SIN UBICACIÓN",
                         samplePost.getId(), samplePost.getDate());
                 }
             }
@@ -281,6 +283,7 @@ public class PostServiceImpl implements PostService {
 
         // 3. Convertir a DTOs
         List<PostResponse> postResponses = posts.stream()
+            .filter(post -> isVerified == null || verificationQueryService.isPostVerified(post) == isVerified)
             .map(this::mapToPostResponse)
             .collect(Collectors.toList());
 
@@ -516,8 +519,19 @@ public class PostServiceImpl implements PostService {
         response.setPostedAt(post.getPostedAt());
         response.setDate(post.getDate());
         response.setIsByIA(post.getIsByIA());
-        response.setIsVerified(post.getIsVerified());
+        response.setIsVerified(verificationQueryService.isPostVerified(post));
         response.setCategory(post.getCategory());
+
+        // Mapear quién verificó el post externamente (si existe)
+        User externalVerifier = verificationQueryService.getExternalVerifier(post.getId());
+        if (externalVerifier != null) {
+            UserDto verifiedByDto = new UserDto();
+            verifiedByDto.setId(externalVerifier.getId());
+            verifiedByDto.setName(externalVerifier.getProfileUsername());
+            verifiedByDto.setType(externalVerifier.getRole());
+            verifiedByDto.setAvatar(externalVerifier.getAvatar());
+            response.setVerifiedBy(verifiedByDto);
+        }
         response.setStatus(post.getStatus());
 
         // Mapear autor manualmente

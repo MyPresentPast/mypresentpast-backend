@@ -1,14 +1,15 @@
 package com.mypresentpast.backend.repository;
 
-import com.mypresentpast.backend.enums.Category;
 import com.mypresentpast.backend.enums.PostStatus;
 import com.mypresentpast.backend.model.Post;
-import java.time.LocalDate;
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para operaciones con Post.
@@ -28,7 +29,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         "AND (NULLIF(:category, '') IS NULL OR p.category = :category) " +
         "AND p.date >= COALESCE(:dateFrom, DATE '1000-01-01') " +
         "AND p.date <= COALESCE(:dateTo, DATE '2100-12-31') " +
-        "AND (:isVerified IS NULL OR p.is_verified = :isVerified) " +
         "AND (:isByIA IS NULL OR p.is_by_ia = :isByIA) " +
         "AND (:userId IS NULL OR p.author_id = :userId) " +
         "ORDER BY p.posted_at DESC",
@@ -41,7 +41,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         @Param("category") String category,
         @Param("dateFrom") LocalDate dateFrom,
         @Param("dateTo") LocalDate dateTo,
-        @Param("isVerified") Boolean isVerified,
         @Param("isByIA") Boolean isByIA,
         @Param("userId") Long userId
     );
@@ -59,7 +58,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         "AND (COALESCE(:#{#categoryStrings.size()}, 0) = 0 OR p.category IN (:categoryStrings)) " +
         "AND p.date >= COALESCE(:dateFrom, DATE '1000-01-01') " +
         "AND p.date <= COALESCE(:dateTo, DATE '2100-12-31') " +
-        "AND (:isVerified IS NULL OR p.is_verified = :isVerified) " +
         "AND (:isByIA IS NULL OR p.is_by_ia = :isByIA) " +
         "AND (COALESCE(:#{#userIds.size()}, 0) = 0 OR p.author_id IN (:userIds)) " +
         "ORDER BY p.posted_at DESC",
@@ -72,7 +70,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         @Param("categoryStrings") List<String> categoryStrings,
         @Param("dateFrom") LocalDate dateFrom,
         @Param("dateTo") LocalDate dateTo,
-        @Param("isVerified") Boolean isVerified,
         @Param("isByIA") Boolean isByIA,
         @Param("userIds") List<Long> userIds
     );
@@ -83,14 +80,23 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByStatusAndLocationIsNotNull(PostStatus status);
 
     /**
-     * Busca posts por usuario.
-     */
-    List<Post> findByAuthorId(Long id);
-    
-    /**
      * Busca posts activos por usuario.
      */
     List<Post> findByAuthorIdAndStatus(Long authorId, PostStatus status);
+    @Query("SELECT p FROM Post p " +
+           "LEFT JOIN FETCH p.author " +
+           "WHERE p.author.id = :authorId")
+    List<Post> findByAuthorId(@Param("authorId") Long id);
+
+    /**
+     * Busca un post por ID con autor y ubicación cargados.
+     */
+    @Query("SELECT p FROM Post p " +
+           "LEFT JOIN FETCH p.author " +
+           "LEFT JOIN FETCH p.location " +
+           "WHERE p.id = :id")
+    Optional<Post> findByIdWithRelations(@Param("id") Long id);
+
 
     /**
      * Cuenta el número de posts activos de un usuario.
