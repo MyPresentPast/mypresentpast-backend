@@ -25,17 +25,18 @@ import com.mypresentpast.backend.service.LikeService;
 import com.mypresentpast.backend.service.PostService;
 import com.mypresentpast.backend.service.PostVerificationQueryService;
 import com.mypresentpast.backend.utils.SecurityUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Implementación del servicio de Post.
@@ -248,7 +249,7 @@ public class PostServiceImpl implements PostService {
 
         // 4. Usar una sola query elegante con filtros opcionales
         List<Post> posts = postRepository.findPostsInAreaWithMultipleFilters(
-                latMin, latMax, lonMin, lonMax, categoryStrings, finalDateFrom, finalDateTo, isVerified, isByIA, finalUserIds
+                latMin, latMax, lonMin, lonMax, categoryStrings, finalDateFrom, finalDateTo, isByIA, finalUserIds
         );
 
         log.info("Encontrados {} posts en área ({},{}) a ({},{}) con filtros: category={}, dateFrom={}, dateTo={}, isVerified={}, isByIA={}, userId={}",
