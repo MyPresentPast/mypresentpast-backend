@@ -2,15 +2,14 @@ package com.mypresentpast.backend.controller.auth;
 
 import com.mypresentpast.backend.dto.request.LoginRequest;
 import com.mypresentpast.backend.dto.request.RegisterRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.AuthResponse;
 import com.mypresentpast.backend.service.AuthService;
+import com.mypresentpast.backend.service.VerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final VerificationService verificationService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest request) {
@@ -25,7 +25,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody @Valid RegisterRequest request) {
+    public ResponseEntity<ApiResponse> register(@RequestBody @Valid RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
+
+    @GetMapping("/verify")
+    public ResponseEntity<ApiResponse> verifyEmail(@RequestParam String token) {
+        return ResponseEntity.ok(verificationService.validateVerificationToken(token));
+    }
+
 }

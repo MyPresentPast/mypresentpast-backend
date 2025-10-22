@@ -2,11 +2,16 @@ package com.mypresentpast.backend.service.impl;
 
 import com.mypresentpast.backend.dto.request.LoginRequest;
 import com.mypresentpast.backend.dto.request.RegisterRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.AuthResponse;
+import com.mypresentpast.backend.exception.BadRequestException;
 import com.mypresentpast.backend.model.User;
 import com.mypresentpast.backend.model.UserRole;
+import com.mypresentpast.backend.model.VerificationToken;
 import com.mypresentpast.backend.repository.UserRepository;
+import com.mypresentpast.backend.repository.VerificationTokenRepository;
 import com.mypresentpast.backend.service.JwtService;
+import com.mypresentpast.backend.service.VerificationService;
 import com.mypresentpast.backend.utils.MessageBundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,13 +23,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.refEq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class AuthServiceImplTest {
 
@@ -38,6 +43,10 @@ class AuthServiceImplTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private AuthenticationManager authenticationManager;
+    @Mock
+    private VerificationTokenRepository verificationTokenRepository;
+    @Mock
+    private VerificationService verificationService;
 
     @BeforeEach
     void setUp() {
@@ -58,8 +67,8 @@ class AuthServiceImplTest {
                 .lastName("Master")
                 .build();
 
-        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
         when(userRepository.existsByProfileUsername(request.getProfileUsername())).thenReturn(false);
+        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
 
         // Simular hash de contraseña
         String hashedPassword = "hashed_Aa12345678";
@@ -74,14 +83,16 @@ class AuthServiceImplTest {
                 .lastName(request.getLastName())
                 .build();
 
-        when(jwtService.getToken(refEq(expectedUser))).thenReturn("mocked-jwt-token");
+        VerificationToken verificationToken = new VerificationToken();
+        verificationToken.setToken("mock-verification-token");
 
+        when(verificationService.createVerificationToken(refEq(expectedUser))).thenReturn(verificationToken);
         // When
-        AuthResponse response = authService.register(request);
+        ApiResponse response = authService.register(request);
 
         // Then
         assertNotNull(response);
-        assertEquals("mocked-jwt-token", response.getToken());
+        assertEquals("Usuario creado. Revisa tu correo para confirmar tu cuenta. Token: " + verificationToken.getToken(), response.getMessage());
 
         verify(userRepository).save(refEq(expectedUser));
 
@@ -91,7 +102,7 @@ class AuthServiceImplTest {
     void givenExistingEmail_whenRegister_thenThrowDataIntegrityViolationException() {
         // Given
         RegisterRequest request = RegisterRequest.builder()
-                .email("existing@mail.com")
+                .email("registrado@mail.com")
                 .profileUsername("newuser")
                 .name("name")
                 .lastName("lastname")
@@ -99,8 +110,12 @@ class AuthServiceImplTest {
                 .confirmPassword("Aa12345678")
                 .build();
 
-        when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
+        User user = User.builder()
+                .email("registrado@mail.com")
+                .emailVerified(true)
+                .build();
 
+        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
         // When & Then
         DataIntegrityViolationException exception = assertThrows(
                 DataIntegrityViolationException.class,
@@ -122,7 +137,6 @@ class AuthServiceImplTest {
                 .confirmPassword("Aa12345678")
                 .build();
 
-        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
         when(userRepository.existsByProfileUsername(request.getProfileUsername())).thenReturn(true);
 
         // When & Then
@@ -133,6 +147,91 @@ class AuthServiceImplTest {
 
         assertEquals(String.format(MessageBundle.DUPLICATE_USERNAME, request.getProfileUsername()), exception.getMessage());
     }
+
+    @Test
+    void givenExistingUnverifiedUserWithValidToken_whenRegister_thenThrowBadRequestException() {
+        // Given
+        RegisterRequest request = RegisterRequest.builder()
+                .email("pending@mail.com")
+                .profileUsername("newuser")
+                .name("Test")
+                .lastName("User")
+                .password("Aa12345678")
+                .confirmPassword("Aa12345678")
+                .build();
+
+        User existingUser = User.builder()
+                .email("pending@mail.com")
+                .emailVerified(false)
+                .build();
+
+        VerificationToken validToken = new VerificationToken();
+        validToken.setUser(existingUser);
+        validToken.setExpiryDate(LocalDateTime.now().plusHours(2));
+
+        when(userRepository.existsByProfileUsername(request.getProfileUsername())).thenReturn(false);
+        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(existingUser));
+        when(verificationTokenRepository.findByUser(existingUser)).thenReturn(Optional.of(validToken));
+
+        // When & Then
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> authService.register(request)
+        );
+
+        assertEquals("Ya existe un registro pendiente para este email. Revisa tu correo.", exception.getMessage());
+
+        // No debe intentar borrar ni crear nada
+        verify(verificationTokenRepository, never()).deleteByUser(any());
+        verify(userRepository, never()).delete(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void givenExistingUnverifiedUserWithExpiredToken_whenRegister_thenDeletesOldUserAndRegistersNew() {
+        // Given
+        RegisterRequest request = RegisterRequest.builder()
+                .email("expiredtoken@mail.com")
+                .profileUsername("springx")
+                .name("Token")
+                .lastName("Expired")
+                .password("Aa12345678")
+                .confirmPassword("Aa12345678")
+                .build();
+
+        User oldUser = User.builder()
+                .email(request.getEmail())
+                .emailVerified(false)
+                .build();
+
+        VerificationToken expiredToken = new VerificationToken();
+        expiredToken.setUser(oldUser);
+        expiredToken.setExpiryDate(LocalDateTime.now().minusHours(1));
+
+        when(userRepository.existsByProfileUsername(request.getProfileUsername())).thenReturn(false);
+        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(oldUser));
+        when(verificationTokenRepository.findByUser(oldUser)).thenReturn(Optional.of(expiredToken));
+
+        VerificationToken newToken = new VerificationToken();
+        newToken.setToken("new-token-123");
+
+        // simulamos encoding
+        when(passwordEncoder.encode("Aa12345678")).thenReturn("hashedPassword");
+        when(verificationService.createVerificationToken(any())).thenReturn(newToken);
+
+        // Act
+        ApiResponse response = authService.register(request);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals("Usuario creado. Revisa tu correo para confirmar tu cuenta. Token: new-token-123", response.getMessage());
+
+        verify(verificationTokenRepository).deleteByUser(oldUser);
+        verify(userRepository).delete(oldUser);
+        verify(userRepository).save(any());
+        verify(verificationService).createVerificationToken(any());
+    }
+
 
     // Tests para login de usuario
 

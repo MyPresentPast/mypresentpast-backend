@@ -2,13 +2,17 @@ package com.mypresentpast.backend.service.impl;
 
 import com.mypresentpast.backend.dto.request.LoginRequest;
 import com.mypresentpast.backend.dto.request.RegisterRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.AuthResponse;
 import com.mypresentpast.backend.exception.BadRequestException;
 import com.mypresentpast.backend.model.User;
 import com.mypresentpast.backend.model.UserRole;
+import com.mypresentpast.backend.model.VerificationToken;
 import com.mypresentpast.backend.repository.UserRepository;
+import com.mypresentpast.backend.repository.VerificationTokenRepository;
 import com.mypresentpast.backend.service.AuthService;
 import com.mypresentpast.backend.service.JwtService;
+import com.mypresentpast.backend.service.VerificationService;
 import com.mypresentpast.backend.utils.CommonFunctions;
 import com.mypresentpast.backend.utils.MessageBundle;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -27,6 +34,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final VerificationTokenRepository verificationTokenRepository;
+    private final VerificationService verificationService;
 
     /**
      * Autentica al usuario usando su email y contraseña.
@@ -56,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
      * Verifica que el email y el profileUsername no estén duplicados.
      */
     @Override
-    public AuthResponse register(RegisterRequest request) {
+    public ApiResponse register(RegisterRequest request) {
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new BadRequestException(MessageBundle.PASSWORD_MISMATCH);
@@ -66,18 +75,34 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException(MessageBundle.PASSWORD_INVALID);
         }
 
-        // Verifica que el email y el profile username no esten registrados
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_EMAIL, request.getEmail()));
-        }
-
+        // Verifica que el profile username no este registrado
         if (userRepository.existsByProfileUsername(request.getProfileUsername())) {
             throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_USERNAME, request.getProfileUsername()));
         }
 
-        // Formatea nombre y apellido en formato "Nombre Apellido"
-        String capitalizedName = CommonFunctions.formatAsTitleCase(request.getName());
-        String capitalizedLastName = CommonFunctions.formatAsTitleCase(request.getLastName());
+        Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
+
+        if (existingUserOpt.isPresent()) {
+            User existingUser = existingUserOpt.get();
+
+            if (existingUser.isEmailVerified()) {
+                // Caso 1: usuario ya verificado → no se puede registrar de nuevo
+                throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_EMAIL, request.getEmail()));
+            } else {
+                // Caso 2: usuario no verificado
+                VerificationToken vToken = verificationTokenRepository.findByUser(existingUser)
+                        .orElse(null);
+
+                if (vToken != null && vToken.getExpiryDate().isAfter(LocalDateTime.now())) {
+                    // Token sigue siendo válido → no permitimos re-registro
+                    throw new BadRequestException("Ya existe un registro pendiente para este email. Revisa tu correo.");
+                }
+
+                // Token vencido → eliminamos usuario y token viejo
+                verificationTokenRepository.deleteByUser(existingUser);
+                userRepository.delete(existingUser);
+            }
+        }
 
         // Crea el nuevo usuario con los datos del request
         User user = User
@@ -86,17 +111,21 @@ public class AuthServiceImpl implements AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .role(UserRole.NORMAL)
-                .name(capitalizedName)
-                .lastName(capitalizedLastName)
+                .name(CommonFunctions.formatAsTitleCase(request.getName()))
+                .lastName(CommonFunctions.formatAsTitleCase(request.getLastName()))
                 .build();
 
         // Guarda el usuario en la base de datos
         userRepository.save(user);
 
-        // Devuelve la respuesta con el token JWT generado
-        return AuthResponse
+        // Creamos el token de verificación
+        VerificationToken verificationToken = verificationService.createVerificationToken(user);
+
+
+        // Devuelve la respuesta con el mensaje y el token de verificación (solo para pruebas)
+        return ApiResponse
                 .builder()
-                .token(jwtService.getToken(user))
+                .message("Usuario creado. Revisa tu correo para confirmar tu cuenta. Token: " + verificationToken.getToken())
                 .build();
     }
 
