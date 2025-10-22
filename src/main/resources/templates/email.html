@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Verifica tu correo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8fafc; /* gray-50 */
+            color: #334155; /* gray-700 */
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #ffffff; /* white */
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0; /* gray-200 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            color: #1e40af; /* primary-blue-600 */
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .message {
+            margin: 20px 0;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #2563eb; /* primary-blue */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: #1d4ed8; /* primary-blue-dark */
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #64748b; /* gray-500 */
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">
+        <img src="https://res.cloudinary.com/dttgwvnoe/image/upload/v1759452799/logo-my-present-past_boxkdf.jpg" alt="MyPresentPast" width="100" /> <!-- Cambiá por tu logo real -->
+    </div>
+
+    <div class="title">Confirma tu correo electrónico</div>
+
+    <div class="message">
+        <p>Hola <strong th:text="${name}">Usuario</strong>,</p>
+        <p>Gracias por registrarte en <strong>MyPresentPast</strong>.</p>
+        <p>Haz clic en el botón de abajo para verificar tu dirección de correo electrónico:</p>
+        <p style="text-align: center;">
+            <a th:href="${verificationUrl}"
+               style="display: inline-block;
+          padding: 12px 24px;
+          background-color: #2563eb;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: bold;
+          text-align: center;
+          font-size: 16px;
+          margin: 20px auto;
+          border: none;">
+                Confirmar Email
+            </a>
+        </p>
+        <p>Si no fuiste tú quien se registró, puedes ignorar este correo.</p>
+    </div>
+
+    <div class="footer">
+        © 2025 MyPresentPast. Todos los derechos reservados.
+    </div>
+</div>
+</body>
+</html>

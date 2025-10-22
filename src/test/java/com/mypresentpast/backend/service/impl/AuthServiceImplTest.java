@@ -10,9 +10,11 @@ import com.mypresentpast.backend.model.UserRole;
 import com.mypresentpast.backend.model.VerificationToken;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.repository.VerificationTokenRepository;
+import com.mypresentpast.backend.service.EmailService;
 import com.mypresentpast.backend.service.JwtService;
 import com.mypresentpast.backend.service.VerificationService;
 import com.mypresentpast.backend.utils.MessageBundle;
+import jakarta.mail.MessagingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,11 +22,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,6 +48,9 @@ class AuthServiceImplTest {
     private VerificationTokenRepository verificationTokenRepository;
     @Mock
     private VerificationService verificationService;
+    @Mock
+    private EmailService emailService;
+
 
     @BeforeEach
     void setUp() {
@@ -56,7 +60,7 @@ class AuthServiceImplTest {
     // Tests para registrar usuario
 
     @Test
-    void givenValidRegisterRequest_whenRegister_thenReturnToken() {
+    void givenValidRegisterRequest_whenRegister_thenReturnToken() throws MessagingException {
         // Given
         RegisterRequest request = RegisterRequest.builder()
                 .email("test@example.com")
@@ -188,7 +192,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void givenExistingUnverifiedUserWithExpiredToken_whenRegister_thenDeletesOldUserAndRegistersNew() {
+    void givenExistingUnverifiedUserWithExpiredToken_whenRegister_thenDeletesOldUserAndRegistersNew() throws MessagingException {
         // Given
         RegisterRequest request = RegisterRequest.builder()
                 .email("expiredtoken@mail.com")
@@ -251,40 +255,103 @@ class AuthServiceImplTest {
                 .password("encodedPassword")
                 .profileUsername("springmaster")
                 .role(UserRole.NORMAL)
+                .emailVerified(true)
                 .build();
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(password, "encodedPassword")).thenReturn(true);
         when(jwtService.getToken(refEq(user))).thenReturn("mocked-jwt");
 
-        // When
         AuthResponse response = authService.login(request);
 
-        // Then
         assertNotNull(response);
         assertEquals("mocked-jwt", response.getToken());
 
-        // Verify interactions
-        verify(authenticationManager).authenticate(
-                refEq(new UsernamePasswordAuthenticationToken(email, password))
-        );
         verify(userRepository).findByEmail(email);
+        verify(passwordEncoder).matches(password, "encodedPassword");
         verify(jwtService).getToken(refEq(user));
     }
 
     @Test
     void givenEmailNotFound_whenLogin_thenThrowException() {
-        // Given
         String email = "notfound@example.com";
 
         LoginRequest request = LoginRequest.builder()
                 .email(email)
-                .password("1234")
+                .password("ABCDFG1234a")
                 .build();
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        // When & Then
-        assertThrows(NoSuchElementException.class, () -> authService.login(request));
+        assertThrows(BadRequestException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void givenWrongPassword_whenLogin_thenThrowBadRequestException() {
+        String email = "test@example.com";
+        String wrongPassword = "wrong123";
+
+        LoginRequest request = LoginRequest.builder()
+                .email(email)
+                .password(wrongPassword)
+                .build();
+
+        User user = User.builder()
+                .email(email)
+                .password("encodedPassword")
+                .profileUsername("springmaster")
+                .role(UserRole.NORMAL)
+                .emailVerified(true)
+                .build();
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(wrongPassword, "encodedPassword")).thenReturn(false);
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> authService.login(request)
+        );
+
+        assertEquals(MessageBundle.LOGIN_FAILED, exception.getMessage());
+
+        verify(userRepository).findByEmail(email);
+        verify(passwordEncoder).matches(wrongPassword, "encodedPassword");
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    void givenUnverifiedUser_whenLogin_thenThrowDisabledException() {
+        // Given
+        String email = "test@example.com";
+        String password = "1234";
+
+        LoginRequest request = LoginRequest.builder()
+                .email(email)
+                .password(password)
+                .build();
+
+        User user = User.builder()
+                .email(email)
+                .password("encodedPassword")
+                .profileUsername("springmaster")
+                .role(UserRole.NORMAL)
+                .emailVerified(false)
+                .build();
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(password, "encodedPassword")).thenReturn(true);
+
+        DisabledException exception = assertThrows(
+                DisabledException.class,
+                () -> authService.login(request)
+        );
+
+        assertEquals(MessageBundle.USER_DISABLED, exception.getMessage());
+
+        verify(userRepository).findByEmail(email);
+        verify(passwordEncoder).matches(password, "encodedPassword");
+        verifyNoInteractions(jwtService);
     }
 
 

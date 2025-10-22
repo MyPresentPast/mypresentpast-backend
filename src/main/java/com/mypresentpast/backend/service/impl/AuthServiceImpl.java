@@ -1,5 +1,6 @@
 package com.mypresentpast.backend.service.impl;
 
+import com.mypresentpast.backend.dto.request.EmailRequest;
 import com.mypresentpast.backend.dto.request.LoginRequest;
 import com.mypresentpast.backend.dto.request.RegisterRequest;
 import com.mypresentpast.backend.dto.response.ApiResponse;
@@ -11,15 +12,16 @@ import com.mypresentpast.backend.model.VerificationToken;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.repository.VerificationTokenRepository;
 import com.mypresentpast.backend.service.AuthService;
+import com.mypresentpast.backend.service.EmailService;
 import com.mypresentpast.backend.service.JwtService;
 import com.mypresentpast.backend.service.VerificationService;
 import com.mypresentpast.backend.utils.CommonFunctions;
 import com.mypresentpast.backend.utils.MessageBundle;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final VerificationTokenRepository verificationTokenRepository;
     private final VerificationService verificationService;
+    private final EmailService emailService;
 
     /**
      * Autentica al usuario usando su email y contraseña.
@@ -43,29 +46,33 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException(MessageBundle.LOGIN_FAILED));
 
-        // Verifica las credenciales del usuario (lanzará una excepción si son incorrectas)
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        // verificar la contraseña primero
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BadRequestException(MessageBundle.LOGIN_FAILED);
+        }
 
-        // Recupera el usuario desde el repositorio
-        UserDetails user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        // verificar si el email está confirmado
+        if (!user.isEmailVerified()) {
+            throw new DisabledException(MessageBundle.USER_DISABLED);
+        }
 
-        // Genera el token JWT
         String token = jwtService.getToken(user);
 
-        // Devuelve la respuesta con el token
-        return AuthResponse
-                .builder()
+        return AuthResponse.builder()
                 .token(token)
                 .build();
     }
+
 
     /**
      * Registra un nuevo usuario en el sistema con rol NORMAL.
      * Verifica que el email y el profileUsername no estén duplicados.
      */
     @Override
-    public ApiResponse register(RegisterRequest request) {
+    public ApiResponse register(RegisterRequest request) throws MessagingException {
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new BadRequestException(MessageBundle.PASSWORD_MISMATCH);
@@ -120,6 +127,15 @@ public class AuthServiceImpl implements AuthService {
 
         // Creamos el token de verificación
         VerificationToken verificationToken = verificationService.createVerificationToken(user);
+
+        // Enviar email
+        EmailRequest emailRequest = new EmailRequest();
+        emailRequest.setRecipient(user.getEmail());
+        emailRequest.setSubject("Confirma tu email en MyPresentPast");
+        emailRequest.setName(user.getName() + " " + user.getLastName());
+        emailRequest.setVerificationUrl("http://localhost:4200/verify-success?token=" + verificationToken.getToken());
+
+        emailService.sendMail(emailRequest);
 
 
         // Devuelve la respuesta con el mensaje y el token de verificación (solo para pruebas)

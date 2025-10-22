@@ -19,6 +19,9 @@ public class MessageBundle {
     public static final String NEW_PASSWORD_SAME_AS_OLD = "La nueva contraseña no puede ser igual a la actual.";
     public static final String DUPLICATE_EMAIL = "El email ya está registrado: [%s]";
     public static final String DUPLICATE_USERNAME = "El nombre de usuario ya está en uso: %s";
+    public static final String LOGIN_FAILED = "Email o contraseña incorrectos";
+    public static final String USER_DISABLED = "El usuario no está habilitado para iniciar sesión";
+
 
     // Profile
     public static final String USER_NOT_FOUND_WITH_ID = "Usuario no encontrado con id [%s] ";
