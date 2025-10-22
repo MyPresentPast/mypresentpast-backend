@@ -49,24 +49,27 @@ public class GroqProvider implements AIProvider {
         }
 
         String prompt = "Eres un CORRECTOR ORTOGRÁFICO BÁSICO. SOLO corrige errores de escritura obvios.\n\n" +
+            "INSTRUCCIÓN CRÍTICA: DEVUELVE ÚNICAMENTE EL TEXTO CORREGIDO, SIN EXPLICACIONES, SIN COMENTARIOS, SIN METADATOS.\n\n" +
             "REGLAS ABSOLUTAS - PROHIBIDO VIOLAR:\n" +
             "1. NUNCA cambies el significado de las palabras\n" +
             "2. NUNCA inventes palabras que no existen ('nevaron', 'sábado' cuando dice 'sarpado')\n" +
             "3. NUNCA agregues palabras nuevas al texto\n" +
             "4. NUNCA cambies palabras de slang argentino (ej: 'sarpado' significa 'increíble')\n" +
             "5. Si una palabra está mal escrita pero entiendes qué quiso decir, corrígela EXACTAMENTE\n" +
-            "6. Si no estás 100% seguro, NO toques la palabra\n\n" +
-            "7. Que no se permitan malas palabras u ofensivas.\n\n" +
-            "EJEMPLOS CORRECTOS:\n" +
-            "- 'nevo' → 'nevó' (falta tilde)\n" +
-            "- 'ermano' → 'hermano' (falta h)\n" +
-            "- 'añoz' → 'años' (z por s)\n" +
-            "- 'villa maria' → 'Villa María' (mayúsculas y tilde)\n" +
-            "- 'sarpado' → 'sarpado' (NO tocar, es slang argentino correcto)\n" +
-            "- 'increible' → 'increíble' (falta tilde)\n\n" +
-            "EJEMPLOS PROHIBIDOS:\n" +
-            "- 'nevo' → 'nevaron' ❌ (cambió número y tiempo)\n" +
-            "- 'sarpado' → 'sábado' ❌ (cambió completamente el significado)\n\n" +
+            "6. Si no estás 100% seguro, NO toques la palabra\n" +
+            "7. Que no se permitan malas palabras u ofensivas\n" +
+            "8. JAMÁS incluyas explicaciones como 'No hay errores' o 'El texto correcto es'\n\n" +
+            "EJEMPLOS DE RESPUESTA CORRECTA:\n" +
+            "Usuario: 'nevo mucho ayer'\n" +
+            "Tu respuesta: 'nevó mucho ayer'\n\n" +
+            "Usuario: 'mi ermano es sarpado'\n" +
+            "Tu respuesta: 'mi hermano es sarpado'\n\n" +
+            "Usuario: 'villa maria es ermosa'\n" +
+            "Tu respuesta: 'Villa María es hermosa'\n\n" +
+            "EJEMPLOS DE RESPUESTA INCORRECTA:\n" +
+            "❌ 'El texto correcto es: nevó mucho ayer'\n" +
+            "❌ 'No hay errores de escritura obvios en el texto'\n" +
+            "❌ 'La corrección sería: Villa María es hermosa'\n\n" +
             "TEXTO A CORREGIR:";
 
         HttpHeaders headers = new HttpHeaders();
@@ -105,6 +108,94 @@ public class GroqProvider implements AIProvider {
 
         } catch (Exception e) {
             log.error("Error llamando a Groq API: {}", e.getMessage(), e);
+            throw new RuntimeException("Error en API de Groq: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String generatePostContent(String date, String location, String context) {
+        if (apiKey == null || apiKey.trim().isEmpty() || "gsk_demo".equals(apiKey)) {
+            throw new IllegalStateException("Groq API key no configurada. Obtén una gratis en: https://console.groq.com/keys");
+        }
+
+        String prompt = "Eres un experto en historia y narrativa que crea publicaciones para la plataforma MyPresentPast.\n\n" +
+            "TAREA:\n" +
+            "Genera una publicación en base a la FECHA, UBICACIÓN y CONTEXTO proporcionados.\n\n" +
+            "REQUISITOS:\n" +
+            "1. El título debe ser atractivo y descriptivo (máximo 100 caracteres).\n" +
+            "2. El contenido debe ser educativo, claro y entre 200-800 caracteres.\n" +
+            "3. Selecciona solo UNA categoría:\n" +
+            "   - STORY: relato o narración histórica.\n" +
+            "   - INFORMATION: hecho o dato comprobado.\n" +
+            "   - MYTH: mito, leyenda o tradición popular.\n" +
+            "4. Usa un tono accesible para público general.\n" +
+            "5. Nunca inventes un evento en una fecha incorrecta.\n\n" +
+            "MANEJO DE FECHAS:\n" +
+            "- La fecha SIEMPRE está en formato YYYY-MM-DD (año-mes-día). Ejemplo: 2018-12-10 = 10 de diciembre de 2018.\n" +
+            "- Si la fecha coincide EXACTAMENTE con un evento: indícalo claramente.\n" +
+            "- Si la fecha es ANTERIOR o POSTERIOR al evento: calcula la diferencia en días de forma precisa.\n" +
+            "- Usa expresiones consistentes:\n" +
+            "   • Diferencia = 1 → 'Un día antes/después...'\n" +
+            "   • Diferencia > 1 → 'A N días de...'\n" +
+            "- Nunca alteres el valor de la fecha ni cambies su orden.\n" +
+        "FORMATO DE RESPUESTA (solo JSON válido, sin texto adicional):\n" +
+            "{\n" +
+            "  \"title\": \"Título de la publicación\",\n" +
+            "  \"content\": \"Contenido detallado de la publicación\",\n" +
+            "  \"category\": \"STORY|INFORMATION|MYTH\"\n" +
+            "}\n\n" +
+            "DATOS DE ENTRADA:\n" +
+            "- Fecha: " + date + "\n" +
+            "- Ubicación: " + location + "\n" +
+            "- Contexto: " + context;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", model);
+        requestBody.put("messages", List.of(
+            Map.of("role", "system", "content", prompt),
+            Map.of("role", "user", "content", "Genera la publicación basada en la información proporcionada.")
+        ));
+        requestBody.put("max_tokens", 1500);
+        requestBody.put("temperature", 0.7);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            log.info("Enviando request a Groq para generar publicación: fecha={}, ubicación={}", date, location);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                apiUrl,
+                HttpMethod.POST,
+                entity,
+                Map.class
+            );
+
+            Map<String, Object> responseBody = response.getBody();
+            if (responseBody == null) {
+                throw new RuntimeException("Respuesta vacía de Groq API");
+            }
+
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+            if (choices == null || choices.isEmpty()) {
+                throw new RuntimeException("No se recibieron opciones de Groq API");
+            }
+
+            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+            if (message == null) {
+                throw new RuntimeException("Mensaje vacío de Groq API");
+            }
+
+            String generatedContent = (String) message.get("content");
+            log.info("Groq generó publicación exitosamente");
+
+            return generatedContent.trim();
+
+        } catch (Exception e) {
+            log.error("Error generando publicación con Groq API: {}", e.getMessage(), e);
             throw new RuntimeException("Error en API de Groq: " + e.getMessage(), e);
         }
     }
