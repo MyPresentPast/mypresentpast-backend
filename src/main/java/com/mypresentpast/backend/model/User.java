@@ -51,6 +51,9 @@ public class User implements UserDetails {
     @Column(name = "avatar")
     private String avatar;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Post> posts;
 
@@ -85,6 +88,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.emailVerified;
     }
 }

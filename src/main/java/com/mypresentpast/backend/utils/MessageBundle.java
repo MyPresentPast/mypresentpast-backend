@@ -19,12 +19,17 @@ public class MessageBundle {
     public static final String NEW_PASSWORD_SAME_AS_OLD = "La nueva contraseña no puede ser igual a la actual.";
     public static final String DUPLICATE_EMAIL = "El email ya está registrado: [%s]";
     public static final String DUPLICATE_USERNAME = "El nombre de usuario ya está en uso: %s";
+    public static final String LOGIN_FAILED = "Email o contraseña incorrectos";
+    public static final String USER_DISABLED = "El usuario no está habilitado para iniciar sesión";
+
 
     // Profile
     public static final String USER_NOT_FOUND_WITH_ID = "Usuario no encontrado con id [%s] ";
     public static final String AVATAR_FILE_REQUIRED = "La imagen es obligatoria para actualizar el avatar";
     public static final String AVATAR_FILE_TOO_LARGE = "La imagen seleccionada supera el tamaño máximo permitido de %d MB.";
     public static final String AVATAR_FILE_INVALID_TYPE = "El formato de la imagen no es válido. Solo se permiten archivos JPEG, PNG o WEBP.";
+    public static final String TOKEN_NOT_FOUND = "Token no encontrado";
+    public static final String TOKEN_EXPIRED = "Token vencido";
 
     // Cloudinary
     public static final String CLOUDINARY_UPLOAD_ERROR = "Ha ocurrido un error al subir la imagen a Cloudinary. Inténtalo nuevamente más tarde.";
