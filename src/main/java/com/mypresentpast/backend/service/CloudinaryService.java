@@ -35,4 +35,13 @@ public interface CloudinaryService {
      */
     Map<String, Object> uploadAvatar(MultipartFile file, Long userId);
 
+    /**
+     * Subir archivo a Cloudinary con opciones personalizadas.
+     *
+     * @param file archivo a subir
+     * @param options opciones de configuración para Cloudinary
+     * @return mapa con información del archivo subido
+     */
+    Map<String, Object> upload(MultipartFile file, Map<String, Object> options);
+
 } 
