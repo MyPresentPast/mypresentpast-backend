@@ -5,23 +5,18 @@ package com.mypresentpast.backend.enums;
  */
 public enum RequestStatus {
     /**
-     * Solicitud recién creada, pendiente de revisión.
+     * Solicitud recién creada, pendiente de revisión por un administrador.
      */
     PENDING,
     
     /**
-     * Solicitud en proceso de revisión por un administrador.
-     * Evita que múltiples admins revisen la misma solicitud.
-     */
-    IN_REVIEW,
-    
-    /**
-     * Solicitud aprobada. El usuario se convierte en INSTITUTION.
+     * Solicitud aprobada. El usuario se convierte en INSTITUTION automáticamente.
      */
     APPROVED,
     
     /**
      * Solicitud rechazada con motivo especificado.
+     * El usuario puede crear una nueva solicitud.
      */
     REJECTED,
     

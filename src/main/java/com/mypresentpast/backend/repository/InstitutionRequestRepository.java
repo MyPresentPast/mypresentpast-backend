@@ -22,18 +22,18 @@ public interface InstitutionRequestRepository extends JpaRepository<InstitutionR
     List<InstitutionRequest> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     /**
-     * Busca una solicitud activa (PENDING, IN_REVIEW o APPROVED) de un usuario.
+     * Busca una solicitud activa (PENDING o APPROVED) de un usuario.
      * Un usuario solo puede tener una solicitud activa a la vez.
      */
     @Query("SELECT ir FROM InstitutionRequest ir WHERE ir.user.id = :userId " +
-           "AND ir.status IN ('PENDING', 'IN_REVIEW', 'APPROVED')")
+           "AND ir.status IN ('PENDING', 'APPROVED')")
     Optional<InstitutionRequest> findActiveRequestByUserId(@Param("userId") Long userId);
 
     /**
      * Verifica si un usuario tiene una solicitud activa.
      */
     @Query("SELECT COUNT(ir) > 0 FROM InstitutionRequest ir WHERE ir.user.id = :userId " +
-           "AND ir.status IN ('PENDING', 'IN_REVIEW', 'APPROVED')")
+           "AND ir.status IN ('PENDING', 'APPROVED')")
     boolean hasActiveRequest(@Param("userId") Long userId);
 
     /**
@@ -54,6 +54,27 @@ public interface InstitutionRequestRepository extends JpaRepository<InstitutionR
            "LEFT JOIN FETCH ir.reviewedBy " +
            "ORDER BY ir.createdAt DESC")
     List<InstitutionRequest> findAllWithUserInfo();
+
+    /**
+     * Busca solicitudes por estado con información del usuario y revisor.
+     * Específico para admin.
+     */
+    @Query("SELECT ir FROM InstitutionRequest ir " +
+           "LEFT JOIN FETCH ir.user " +
+           "LEFT JOIN FETCH ir.reviewedBy " +
+           "WHERE ir.status = :status " +
+           "ORDER BY ir.createdAt ASC")
+    List<InstitutionRequest> findByStatusWithUserInfo(@Param("status") RequestStatus status);
+
+    /**
+     * Busca una solicitud por ID con información del usuario y revisor.
+     * Específico para admin.
+     */
+    @Query("SELECT ir FROM InstitutionRequest ir " +
+           "LEFT JOIN FETCH ir.user " +
+           "LEFT JOIN FETCH ir.reviewedBy " +
+           "WHERE ir.id = :id")
+    Optional<InstitutionRequest> findByIdWithUserInfo(@Param("id") Long id);
 
     /**
      * Cuenta solicitudes por estado.

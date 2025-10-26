@@ -35,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers(AUTH_WHITELIST).permitAll() // Son endpoints publicos definidos en la constante AUTH_WHITELIST.
                         .requestMatchers("/posts/*/verify").hasRole("INSTITUTION") // Solo instituciones pueden verificar posts
                         .requestMatchers("/institution-requests/**").hasRole("NORMAL") // Solo usuarios normales pueden gestionar solicitudes de institución
+                        .requestMatchers("/admin/**").hasRole("ADMIN") // Solo administradores pueden acceder a endpoints de admin
                         .anyRequest().authenticated() // El resto de request van a tener que estar autenticadas si o si.
                 )
                 .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
