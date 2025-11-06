@@ -22,9 +22,7 @@ public class MessageBundle {
     public static final String LOGIN_FAILED = "Email o contraseña incorrectos";
     public static final String USER_DISABLED = "El usuario no está habilitado para iniciar sesión";
 
-
     // Profile
-    public static final String USER_NOT_FOUND_WITH_ID = "Usuario no encontrado con id [%s] ";
     public static final String AVATAR_FILE_REQUIRED = "La imagen es obligatoria para actualizar el avatar";
     public static final String AVATAR_FILE_TOO_LARGE = "La imagen seleccionada supera el tamaño máximo permitido de %d MB.";
     public static final String AVATAR_FILE_INVALID_TYPE = "El formato de la imagen no es válido. Solo se permiten archivos JPEG, PNG o WEBP.";
@@ -33,6 +31,13 @@ public class MessageBundle {
 
     // Cloudinary
     public static final String CLOUDINARY_UPLOAD_ERROR = "Ha ocurrido un error al subir la imagen a Cloudinary. Inténtalo nuevamente más tarde.";
+
+    // Reportes
+    public static final String REPORT_ALREADY_EXISTS_WITH_IDS = "El usuario con ID [%s] ya reportó la publicación con ID [%s].";
+
+    // Errores generales
+    public static final String POST_NOT_FOUND_WITH_ID = "Publicación no encontrado con id [%s] - id usuario [%s]";
+    public static final String USER_NOT_FOUND_WITH_ID = "Usuario no encontrado con id [%s] ";
 
 
     private MessageBundle() {
