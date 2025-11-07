@@ -35,11 +35,12 @@ public class CreateInstitutionRequestDto {
 
     /**
      * Teléfono oficial de la institución.
+     * Acepta formatos internacionales con código de país, espacios, guiones y paréntesis.
      */
     @JsonProperty("official_phone")
     @NotBlank()
-    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", 
-             message = "Teléfono debe tener formato internacional válido")
+    @Pattern(regexp = "^[+]?[(]?[0-9]{1,4}[)]?[-\\s.]?[(]?[0-9]{1,4}[)]?[-\\s.]?[0-9]{1,5}[-\\s.]?[0-9]{1,5}$", 
+             message = "Teléfono debe ser un número válido (puede incluir código de país, espacios, guiones o paréntesis)")
     private String officialPhone;
 
     /**
@@ -57,10 +58,11 @@ public class CreateInstitutionRequestDto {
 
     /**
      * Sitio web oficial (opcional).
+     * Acepta URLs con o sin protocolo, con o sin www, subdominios, paths, etc.
      */
     @JsonProperty("official_website")
     @Size(max = 200)
-    @Pattern(regexp = "^(https?://)?(www\\.)?[a-zA-Z0-9-]+\\.[a-zA-Z]{2,}(/.*)?$|^$", 
+    @Pattern(regexp = "^$|^(https?://)?(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)$", 
              message = "Sitio web debe tener formato de URL válido")
     private String officialWebsite;
 }
