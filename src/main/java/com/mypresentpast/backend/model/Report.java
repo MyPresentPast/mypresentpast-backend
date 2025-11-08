@@ -8,10 +8,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reports", uniqueConstraints = {
-        // Asegura que un usuario (reporter_id) solo pueda reportar el mismo post (post_id) una vez.
-        @UniqueConstraint(columnNames = {"post_id", "reporter_id"})
-})
+@Table(name = "reports")
 @Getter
 @Setter
 @Builder

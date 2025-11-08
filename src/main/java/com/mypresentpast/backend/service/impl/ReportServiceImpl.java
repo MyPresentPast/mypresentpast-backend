@@ -42,6 +42,10 @@ public class ReportServiceImpl implements ReportService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format(MessageBundle.POST_NOT_FOUND_WITH_ID, postId, reporterId)));
 
+        // Validación para evitar que el usuario reporte su propia publicación
+        if (post.getAuthor().getId().equals(reporterId)) {
+            throw new BadRequestException(String.format(MessageBundle.REPORT_SELF_POST_NOT_ALLOWED, reporterId, postId));
+        }
 
         // Validación de unicidad de negocio (Restricción de duplicidad)
         if (reportRepository.existsActiveReportByPostIdAndReporterId(postId, reporterId, EnumSet.of(ReportStatus.PENDING, ReportStatus.IN_PROGRESS))) {
