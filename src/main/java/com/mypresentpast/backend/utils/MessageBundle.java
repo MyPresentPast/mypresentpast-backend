@@ -35,6 +35,7 @@ public class MessageBundle {
     // Reportes
     public static final String REPORT_ALREADY_EXISTS_WITH_IDS = "El usuario con ID [%s] ya reportó la publicación con ID [%s].";
     public static final String REPORT_SELF_POST_NOT_ALLOWED = "El usuario con ID [%s] intentó reportar su propia publicación con ID [%s].";
+    public static final String REPORT_NOT_FOUND_WITH_ID = "Reporte con id [%s] no encontrado";
 
     // Errores generales
     public static final String POST_NOT_FOUND_WITH_ID = "Publicación no encontrado con id [%s] - id usuario [%s]";

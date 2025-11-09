@@ -1,6 +1,6 @@
 package com.mypresentpast.backend.service.impl;
 
-import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.response.*;
 import com.mypresentpast.backend.enums.ReportStatus;
 import com.mypresentpast.backend.enums.ReportType;
 import com.mypresentpast.backend.exception.BadRequestException;
@@ -15,10 +15,13 @@ import com.mypresentpast.backend.service.ReportService;
 import com.mypresentpast.backend.utils.MessageBundle;
 import com.mypresentpast.backend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +50,8 @@ public class ReportServiceImpl implements ReportService {
             throw new BadRequestException(String.format(MessageBundle.REPORT_SELF_POST_NOT_ALLOWED, reporterId, postId));
         }
 
-        // Validación de unicidad de negocio (Restricción de duplicidad)
-        if (reportRepository.existsActiveReportByPostIdAndReporterId(postId, reporterId, EnumSet.of(ReportStatus.PENDING, ReportStatus.IN_PROGRESS))) {
+        // Si ya existe un reporte activo (PENDING o ACCEPTED) por parte del mismo usuario para la misma publicación, lanzar excepción
+        if (reportRepository.existsActiveReportByPostIdAndReporterId(postId, reporterId, EnumSet.of(ReportStatus.PENDING, ReportStatus.ACCEPTED))) {
             throw new BadRequestException(String.format(MessageBundle.REPORT_ALREADY_EXISTS_WITH_IDS, reporterId, postId));
         }
         // Construcción del Reporte
@@ -68,4 +71,65 @@ public class ReportServiceImpl implements ReportService {
                 .build();
 
     }
+
+    @Override
+    public ReportListingResponse getReportListing(Pageable pageable, ReportStatus status) {
+        Page<Report> page;
+        // Si se proporciona un estado, filtrar por ese estado
+        if (status != null) {
+            page = reportRepository.findByStatus(status, pageable);
+        } else {
+            page = reportRepository.findAll(pageable);
+        }
+        // Mapear entidades a DTOs
+        List<ReportDetailResponse> dtos = page.getContent().stream()
+                .map(this::mapToReportDetailResponse)
+                .toList();
+        // Construir la respuesta de paginación
+        ReportListingResponse response = new ReportListingResponse();
+        response.setReports(dtos);
+        response.setPage(page.getNumber());
+        response.setSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+
+        return response;
+    }
+
+    @Override
+    public ReportDetailResponse getReportDetail(Long reportId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format(MessageBundle.REPORT_NOT_FOUND_WITH_ID, reportId)));
+        return mapToDetailResponse(report);
+    }
+
+    // Métodos de mapeo
+    private ReportDetailResponse mapToReportDetailResponse(Report report) {
+        ReportDetailResponse dto = new ReportDetailResponse();
+        dto.setId(report.getId());
+        dto.setType(report.getType());
+        dto.setStatus(report.getStatus());
+        dto.setReason(report.getReason());
+        dto.setCreatedAt(report.getCreatedAt());
+        dto.setPostId(report.getPost().getId());
+        dto.setReporterId(report.getReporter().getId());
+        dto.setPostName(report.getPost().getTitle());
+        return dto;
+    }
+
+    private ReportDetailResponse mapToDetailResponse(Report report) {
+        ReportDetailResponse dto = new ReportDetailResponse();
+        dto.setId(report.getId());
+        dto.setType(report.getType());
+        dto.setStatus(report.getStatus());
+        dto.setReason(report.getReason());
+        dto.setCreatedAt(report.getCreatedAt());
+        dto.setPostId(report.getPost().getId());
+        dto.setPostName(report.getPost().getTitle());
+        dto.setReporterId(report.getReporter().getId());
+        dto.setReporterNickname(report.getReporter().getProfileUsername());
+        dto.setPostAuthorNickname(report.getPost().getAuthor().getProfileUsername());
+        return dto;
+    }
+
 }
