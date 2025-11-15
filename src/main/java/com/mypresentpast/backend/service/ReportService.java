@@ -41,4 +41,26 @@ public interface ReportService {
      * @return Detalle del reporte.
      */
     ReportDetailResponse getReportDetail(Long reportId);
+
+    /**
+     * Acepta un reporte de publicación, cambiando su estado, eliminando la publicación y registrando el administrador que lo acepta.
+     *
+     * @param reportId ID del reporte a aceptar.
+     * @param adminId ID del administrador que realiza la acción.
+     * @return Respuesta indicando el resultado de la operación.
+     * @throws com.mypresentpast.backend.exception.ResourceNotFoundException si el reporte o el administrador no existen.
+     * @throws com.mypresentpast.backend.exception.BadRequestException si el reporte no está en estado válido para ser aceptado.
+     */
+    ApiResponse acceptReport(Long reportId, Long adminId);
+
+    /**
+     * Rechaza un reporte de publicación, cambiando su estado, manteniendo la publicación y registrando el administrador que lo rechaza.
+     *
+     * @param reportId ID del reporte a rechazar.
+     * @param adminId ID del administrador que realiza la acción.
+     * @return Respuesta indicando el resultado de la operación.
+     * @throws com.mypresentpast.backend.exception.ResourceNotFoundException si el reporte o el administrador no existen.
+     * @throws com.mypresentpast.backend.exception.BadRequestException si el reporte no está en estado válido para ser rechazado.
+     */
+    ApiResponse rejectReport(Long reportId, Long adminId);
 }

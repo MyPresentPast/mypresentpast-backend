@@ -36,6 +36,11 @@ public class MessageBundle {
     public static final String REPORT_ALREADY_EXISTS_WITH_IDS = "El usuario con ID [%s] ya reportó la publicación con ID [%s].";
     public static final String REPORT_SELF_POST_NOT_ALLOWED = "El usuario con ID [%s] intentó reportar su propia publicación con ID [%s].";
     public static final String REPORT_NOT_FOUND_WITH_ID = "Reporte con id [%s] no encontrado";
+    public static final String REPORT_ALREADY_PROCESSED = "El reporte [%s] ya fue procesado.";
+    public static final String ADMIN_NOT_FOUND_WITH_ID = "Admin [%s] no encontrado.";
+    public static final String REPORT_ACCEPTED_AND_POST_DELETED = "Reporte [%s] aceptado por admin [%s]. Publicación [%s] eliminada.";
+    public static final String REPORT_REJECTED_AND_ARCHIVED = "Reporte [%s] rechazado por admin [%s]. Publicación [%s] mantenida.";
+
 
     // Errores generales
     public static final String POST_NOT_FOUND_WITH_ID = "Publicación no encontrado con id [%s] - id usuario [%s]";

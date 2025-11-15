@@ -49,12 +49,7 @@ public class PostVerificationServiceImpl implements PostVerificationService {
         // Buscar el post con relaciones cargadas
         Post post = postRepository.findByIdWithRelations(postId)
             .orElseThrow(() -> new ResourceNotFoundException("Post no encontrado"));
-        
-        // Validar que el post esté activo
-        if (post.getStatus() != PostStatus.ACTIVE) {
-            throw new BadRequestException("Solo se pueden verificar posts activos");
-        }
-        
+
         // Validar que no sea su propio post (posts de institución ya están auto-verificados)
         if (post.getAuthor().getId().equals(currentUser.getId())) {
             throw new BadRequestException("No puedes verificar tus propios posts, ya están auto-verificados");

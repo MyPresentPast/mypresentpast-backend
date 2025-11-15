@@ -94,7 +94,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p " +
            "LEFT JOIN FETCH p.author " +
            "LEFT JOIN FETCH p.location " +
-           "WHERE p.id = :id")
+           "WHERE p.id = :id AND p.status = 'ACTIVE'")
     Optional<Post> findByIdWithRelations(@Param("id") Long id);
 
 
