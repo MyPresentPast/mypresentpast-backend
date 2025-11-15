@@ -11,6 +11,7 @@ import com.mypresentpast.backend.model.User;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.ReportRepository;
 import com.mypresentpast.backend.repository.UserRepository;
+import com.mypresentpast.backend.service.PostService;
 import com.mypresentpast.backend.service.ReportService;
 import com.mypresentpast.backend.utils.MessageBundle;
 import com.mypresentpast.backend.utils.SecurityUtils;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -28,6 +30,7 @@ import java.util.List;
 public class ReportServiceImpl implements ReportService {
 
     private final PostRepository postRepository;
+    private final PostService postService;
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
 
@@ -132,4 +135,56 @@ public class ReportServiceImpl implements ReportService {
         return dto;
     }
 
+    @Override
+    @Transactional
+    public ApiResponse acceptReport(Long reportId, Long adminId) {
+        // Obtener el reporte
+        Report report = reportRepository.findById(reportId).orElseThrow(() -> new ResourceNotFoundException(String.format(MessageBundle.REPORT_NOT_FOUND_WITH_ID, reportId)));
+
+        // Verificar que el reporte esté en estado PENDING
+        if (report.getStatus() != ReportStatus.PENDING) {
+            throw new BadRequestException(String.format(MessageBundle.REPORT_ALREADY_PROCESSED, reportId));
+        }
+        report.setStatus(ReportStatus.ACCEPTED);
+        report.setDecisionAt(LocalDateTime.now());
+
+        // Obtener el administrador que toma la decisión
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    String.format(MessageBundle.ADMIN_NOT_FOUND_WITH_ID, adminId)));
+
+        report.setDecidedBy(admin);
+
+        // Guardar los cambios en el reporte y eliminar la publicación (eliminación lógica)
+        reportRepository.save(report);
+        postService.deletePost(report.getPost().getId());
+
+        String msg = String.format(MessageBundle.REPORT_ACCEPTED_AND_POST_DELETED, report.getId(), admin.getId(), report.getPost().getId());
+
+        return ApiResponse.builder().message(msg).build();
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse rejectReport(Long reportId, Long adminId) {
+        // Obtener el reporte
+        Report report = reportRepository.findById(reportId).orElseThrow(() -> new ResourceNotFoundException(String.format(MessageBundle.REPORT_NOT_FOUND_WITH_ID, reportId)));
+
+        // Verificar que el reporte esté en estado PENDING
+        if (report.getStatus() != ReportStatus.PENDING) {
+            throw new BadRequestException(String.format(MessageBundle.REPORT_ALREADY_PROCESSED, reportId));
+        }
+        report.setStatus(ReportStatus.REJECTED);
+        report.setDecisionAt(LocalDateTime.now());
+
+        // Obtener el administrador que toma la decisión
+        User admin = userRepository.findById(adminId).orElseThrow(() -> new ResourceNotFoundException(String.format(MessageBundle.ADMIN_NOT_FOUND_WITH_ID, adminId)));
+        report.setDecidedBy(admin);
+
+        // Guardar los cambios en el reporte
+        reportRepository.save(report);
+
+        String msg = String.format(MessageBundle.REPORT_REJECTED_AND_ARCHIVED, report.getId(), admin.getId(), report.getPost().getId());
+        return ApiResponse.builder().message(msg).build();
+    }
 }

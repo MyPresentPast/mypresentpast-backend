@@ -1,13 +1,18 @@
 package com.mypresentpast.backend.service.impl;
 
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.ReportDetailResponse;
 import com.mypresentpast.backend.dto.response.ReportListingResponse;
 import com.mypresentpast.backend.enums.ReportStatus;
 import com.mypresentpast.backend.enums.ReportType;
+import com.mypresentpast.backend.exception.BadRequestException;
+import com.mypresentpast.backend.exception.ResourceNotFoundException;
 import com.mypresentpast.backend.model.Post;
 import com.mypresentpast.backend.model.Report;
 import com.mypresentpast.backend.model.User;
 import com.mypresentpast.backend.repository.ReportRepository;
+import com.mypresentpast.backend.repository.UserRepository;
+import com.mypresentpast.backend.service.PostService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,12 +25,16 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class ReportServiceImplTest {
 
     @Mock
     private ReportRepository reportRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private PostService postService;
 
     @InjectMocks
     private ReportServiceImpl reportService;
@@ -33,6 +42,7 @@ class ReportServiceImplTest {
     private Report testReport;
     private Post testPost;
     private User testUser;
+    private User adminUser;
 
     @BeforeEach
     void setUp() {
@@ -43,6 +53,9 @@ class ReportServiceImplTest {
         testUser.setProfileUsername("reporter");
         testUser.setName("Juan");
         testUser.setLastName("Pérez");
+
+        adminUser = new User();
+        adminUser.setId(99L);
 
         testPost = new Post();
         testPost.setId(2L);
@@ -102,4 +115,71 @@ class ReportServiceImplTest {
         assertThrows(RuntimeException.class, () -> reportService.getReportDetail(99L));
     }
 
+    @Test
+    void acceptReport_Success() {
+        // Simular el comportamiento del repositorio y servicio
+        when(reportRepository.findById(10L)).thenReturn(Optional.of(testReport));
+        when(userRepository.findById(99L)).thenReturn(Optional.of(adminUser));
+        when(reportRepository.save(any(Report.class))).thenReturn(testReport);
+
+        ApiResponse response = reportService.acceptReport(10L, 99L);
+
+        assertNotNull(response);
+        // Verificar que el mensaje contenga la palabra "aceptado"
+        assertTrue(response.getMessage().contains("aceptado"));
+        // Verificar que el estado del reporte sea ACCEPTED
+        assertEquals(ReportStatus.ACCEPTED, testReport.getStatus());
+        // Verificar que se haya llamado a deletePost del servicio PostService
+        verify(postService).deletePost(anyLong());
+    }
+
+    @Test
+    void acceptReport_ReportNotFound_ThrowsException() {
+        // Simular que el reporte no existe
+        when(reportRepository.findById(10L)).thenReturn(Optional.empty());
+        // Asegurarse de que se lance la excepción ResourceNotFoundException
+        assertThrows(ResourceNotFoundException.class, () -> reportService.acceptReport(10L, 99L));
+    }
+
+    @Test
+    void acceptReport_InvalidStatus_ThrowsException() {
+        // Cambiar el estado del reporte a REJECTED para simular un estado inválido
+        testReport.setStatus(ReportStatus.REJECTED);
+        when(reportRepository.findById(10L)).thenReturn(Optional.of(testReport));
+        // Asegurarse de que se lance la excepción BadRequestException
+        assertThrows(BadRequestException.class, () -> reportService.acceptReport(10L, 99L));
+    }
+
+    @Test
+    void rejectReport_Success() {
+        // Simular el comportamiento del repositorio y servicio
+        when(reportRepository.findById(10L)).thenReturn(Optional.of(testReport));
+        when(userRepository.findById(99L)).thenReturn(Optional.of(adminUser));
+        when(reportRepository.save(any(Report.class))).thenReturn(testReport);
+
+        ApiResponse response = reportService.rejectReport(10L, 99L);
+
+        assertNotNull(response);
+        // Verificar que el mensaje contenga la palabra "rechazado"
+        assertTrue(response.getMessage().contains("rechazado"));
+        // Verificar que el estado del reporte sea REJECTED
+        assertEquals(ReportStatus.REJECTED, testReport.getStatus());
+    }
+
+    @Test
+    void rejectReport_ReportNotFound_ThrowsException() {
+        // Simular que el reporte no existe
+        when(reportRepository.findById(10L)).thenReturn(Optional.empty());
+        // asegurarse de que se lance la excepción ResourceNotFoundException
+        assertThrows(ResourceNotFoundException.class, () -> reportService.rejectReport(10L, 99L));
+    }
+
+    @Test
+    void rejectReport_InvalidStatus_ThrowsException() {
+        // Cambiar el estado del reporte a ACCEPTED para simular un estado inválido
+        testReport.setStatus(ReportStatus.ACCEPTED);
+        when(reportRepository.findById(10L)).thenReturn(Optional.of(testReport));
+        // asegurarse de que se lance la excepción BadRequestException
+        assertThrows(BadRequestException.class, () -> reportService.rejectReport(10L, 99L));
+    }
 }

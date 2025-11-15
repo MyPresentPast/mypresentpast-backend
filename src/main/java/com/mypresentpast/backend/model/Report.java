@@ -61,6 +61,13 @@ public class Report {
     @Column(name = "created_at",nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "decision_at")
+    private LocalDateTime decisionAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "decided_by")
+    private User decidedBy;
+
     // Se encarga de ser un inicializador para los valores por defecto de las columnas.
     @PrePersist
     private void prePersist() {
