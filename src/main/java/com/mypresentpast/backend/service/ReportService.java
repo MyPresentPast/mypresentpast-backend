@@ -1,7 +1,11 @@
 package com.mypresentpast.backend.service;
 
 import com.mypresentpast.backend.dto.response.ApiResponse;
+import com.mypresentpast.backend.dto.response.ReportDetailResponse;
+import com.mypresentpast.backend.dto.response.ReportListingResponse;
+import com.mypresentpast.backend.enums.ReportStatus;
 import com.mypresentpast.backend.enums.ReportType;
+import org.springframework.data.domain.Pageable;
 
 public interface ReportService {
     /**
@@ -20,4 +24,21 @@ public interface ReportService {
      */
     ApiResponse createReport(Long postId, String reason, ReportType type);
 
+    /**
+     * Obtiene el listado paginado de reportes de publicaciones.
+     * Permite filtrar por estado si se proporciona el parámetro.
+     *
+     * @param pageable Parámetros de paginación y ordenamiento.
+     * @param status Estado del reporte (opcional).
+     * @return Listado paginado de reportes.
+     */
+    ReportListingResponse getReportListing(Pageable pageable, ReportStatus status);
+
+    /**
+     * Obtiene el detalle de un reporte específico por su ID.
+     *
+     * @param reportId ID del reporte.
+     * @return Detalle del reporte.
+     */
+    ReportDetailResponse getReportDetail(Long reportId);
 }

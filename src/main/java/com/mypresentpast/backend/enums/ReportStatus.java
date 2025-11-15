@@ -5,7 +5,6 @@ package com.mypresentpast.backend.enums;
  */
 public enum ReportStatus {
     PENDING, // pendiente, ningún admin lo tomó.
-    IN_PROGRESS, // un admin lo está revisando.
-    ACCEPTED, // se aprueba y se debe remover la publicación (otra tarea).
+    ACCEPTED, // se aprueba y se debe remover la publicación.
     REJECTED // se rechaza y no se hace nada.
 }
