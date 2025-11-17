@@ -6,10 +6,10 @@
 -- 1. USUARIOS (SIN DUPLICADOS)
 -- 🔐 CONTRASEÑA PARA TODOS: TestPassword123
 INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('mferradans', 'mateo@test.com', '$2a$10$wPpCaSsVWMND5AEtYqLKfuKdgZb2JyHGSQA/poP/9jbYosU59ShBW', 'ADMIN', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face', 'Mateo', 'Ferradans', true);
-INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('Museo Nacional Argentino','museo@test.com', '$2a$10$wPpCaSsVWMND5AEtYqLKfuKdgZb2JyHGSQA/poP/9jbYosU59ShBW', 'INSTITUTION', 'https://images.unsplash.com/photo-1651419366419-d587fdf057fb?w=400&h=400&fit=crop', 'Museo Nacional Argentino', null, true);
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('Museo Nacional Argentino','museo@test.com', '$2a$10$wPpCaSsVWMND5AEtYqLKfuKdgZb2JyHGSQA/poP/9jbYosU59ShBW', 'INSTITUTION', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763406251/museo_nacional_argentinojpg_z97nfw.jpg', 'Museo Nacional Argentino', null, true);
 INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('Historia Argentina', 'historia@test.com','$2a$10$wPpCaSsVWMND5AEtYqLKfuKdgZb2JyHGSQA/poP/9jbYosU59ShBW', 'NORMAL', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face', 'Historia', 'Argentina', true);
-INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('Universidad Nacional', 'universidad@test.com', '$2a$10$wPpCaSsVWMND5AEtYqLKfuKdgZb2JyHGSQA/poP/9jbYosU59ShBW', 'INSTITUTION', 'https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?w=400&h=400&fit=crop', 'Universidad Nacional de Córdoba', null, true);
-INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('usuario_normal', 'normal@test.com', '$2a$10$wPpCaSsVWMND5AEtYqLKfuKdgZb2JyHGSQA/poP/9jbYosU59ShBW', 'NORMAL', 'https://images.unsplash.com/photo-1539571696285-e7d0710b8999?w=400&h=400&fit=crop&crop=face', 'Juan', 'Pérez', true);
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('Universidad Nacional', 'universidad@test.com', '$2a$10$wPpCaSsVWMND5AEtYqLKfuKdgZb2JyHGSQA/poP/9jbYosU59ShBW', 'INSTITUTION', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763406049/intituci%C3%B3n_ozmono.webp', 'Universidad Nacional de Córdoba', null, true);
+INSERT INTO user_account (profile_username, email, password, role, avatar, name, last_name, email_verified) VALUES ('usuario_normal', 'normal@test.com', '$2a$10$wPpCaSsVWMND5AEtYqLKfuKdgZb2JyHGSQA/poP/9jbYosU59ShBW', 'NORMAL', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1711340519/Iconos/FotoTraje_gw1icj.jpg', 'Juan', 'Pérez', true);
 
 -- 2. UBICACIONES DISTRIBUIDAS POR TODO EL MUNDO
 -- América del Sur
@@ -102,10 +102,13 @@ INSERT INTO post (title, content, date, posted_at, is_by_ia, category, status, a
 
 -- 4. MEDIA PARA LOS POSTS (IDs 1-31)
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800', 1);
-INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800', 2);
-INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=800', 3);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405235/cristo_redentor_1_ndsncz.jpg', 2);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405234/cristo_redentor_2_bvvtrv.jpg', 2);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405459/ball_drop_times_squate_1_kmzetl.jpg', 3);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405460/ball_drop_times_square_2_hsxkxz.jpg', 3);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800', 4);
-INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=800', 5);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405694/teohihuacan_1_ob84y9.jpg', 5);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405694/teotihuacan_2_dgldeu.avif', 5);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1589909202802-8f4aadce1849?w=800', 6);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763390381/contrucci%C3%B3n_obelisco_i7ntzy.jpg', 7);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763390381/Construcci%C3%B3n_obelisco_2_glkvu1.jpg', 7);
@@ -128,16 +131,22 @@ INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', 18);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=800', 19);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800', 20);
-INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1551524164-6cf2ac531fb4?w=800', 21);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763404272/bariloche_y_los_pioneros_alemanes_adlhgj.webp', 20);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763404272/bariloche_y_los_pioneros_alemanes_2_hundnq.avif', 20);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763404395/ushuaia_1_a1gvjw.jpg', 21);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763404396/ushuaia_2_yrjq1l.jpg', 21);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800', 22);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=800', 23);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1599833975787-5c143f373c30?w=800', 24);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1555993539-1732b0258235?w=800', 25);
-INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800', 26);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763404826/sagrada_familia_1_qiqfld.jpg', 26);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763404828/sagrada_familia_2_syx0cr.jpg', 26);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800', 27);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800', 28);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1478436127897-769e1b3f0f36?w=800', 29);
-INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=800', 30);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405071/Piramide_Guiza_1_azw95k.jpg', 30);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405072/Piramide_Guiza_2_wivs2n.jpg', 30);
+INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://res.cloudinary.com/dttgwvnoe/image/upload/v1763405075/Piramide_Guiza_3_ogwyok.jpg', 30);
 INSERT INTO media (type, url, post_id) VALUES ('IMAGE', 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', 31);
 
 -- 5. LIKES PARA HACER MÁS REALISTA LA EXPERIENCIA
