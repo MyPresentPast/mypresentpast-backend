@@ -14,6 +14,7 @@ import com.mypresentpast.backend.repository.VerificationTokenRepository;
 import com.mypresentpast.backend.service.AuthService;
 import com.mypresentpast.backend.service.EmailService;
 import com.mypresentpast.backend.service.JwtService;
+import com.mypresentpast.backend.service.RecaptchaService;
 import com.mypresentpast.backend.service.VerificationService;
 import com.mypresentpast.backend.utils.CommonFunctions;
 import com.mypresentpast.backend.utils.MessageBundle;
@@ -39,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
     private final VerificationTokenRepository verificationTokenRepository;
     private final VerificationService verificationService;
     private final EmailService emailService;
+    private final RecaptchaService recaptchaService;
 
     /**
      * Autentica al usuario usando su email y contraseña.
@@ -46,6 +48,10 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public AuthResponse login(LoginRequest request) {
+        if (!recaptchaService.verify(request.getRecaptchaToken())) {
+            throw new BadRequestException("Verificación reCAPTCHA fallida. Por favor, intentá de nuevo.");
+        }
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException(MessageBundle.LOGIN_FAILED));
 
