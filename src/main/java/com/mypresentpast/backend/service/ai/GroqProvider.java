@@ -118,36 +118,39 @@ public class GroqProvider implements AIProvider {
             throw new IllegalStateException("Groq API key no configurada. Obtén una gratis en: https://console.groq.com/keys");
         }
 
-        String prompt = "Eres un experto en historia y narrativa que crea publicaciones para la plataforma MyPresentPast.\n\n" +
-            "TAREA:\n" +
-            "Genera una publicación en base a la FECHA, UBICACIÓN y CONTEXTO proporcionados.\n\n" +
-            "REQUISITOS:\n" +
-            "1. El título debe ser atractivo y descriptivo (máximo 100 caracteres).\n" +
-            "2. El contenido debe ser educativo, claro y entre 200-800 caracteres.\n" +
-            "3. Selecciona solo UNA categoría:\n" +
-            "   - STORY: relato o narración histórica.\n" +
-            "   - INFORMATION: hecho o dato comprobado.\n" +
-            "   - MYTH: mito, leyenda o tradición popular.\n" +
-            "4. Usa un tono accesible para público general.\n" +
-            "5. Nunca inventes un evento en una fecha incorrecta.\n\n" +
-            "MANEJO DE FECHAS:\n" +
-            "- La fecha SIEMPRE está en formato YYYY-MM-DD (año-mes-día). Ejemplo: 2018-12-10 = 10 de diciembre de 2018.\n" +
-            "- Si la fecha coincide EXACTAMENTE con un evento: indícalo claramente.\n" +
-            "- Si la fecha es ANTERIOR o POSTERIOR al evento: calcula la diferencia en días de forma precisa.\n" +
-            "- Usa expresiones consistentes:\n" +
-            "   • Diferencia = 1 → 'Un día antes/después...'\n" +
-            "   • Diferencia > 1 → 'A N días de...'\n" +
-            "- Nunca alteres el valor de la fecha ni cambies su orden.\n" +
-        "FORMATO DE RESPUESTA (solo JSON válido, sin texto adicional):\n" +
-            "{\n" +
-            "  \"title\": \"Título de la publicación\",\n" +
-            "  \"content\": \"Contenido detallado de la publicación\",\n" +
-            "  \"category\": \"STORY|INFORMATION|MYTH\"\n" +
-            "}\n\n" +
-            "DATOS DE ENTRADA:\n" +
-            "- Fecha: " + date + "\n" +
-            "- Ubicación: " + location + "\n" +
-            "- Contexto: " + context;
+        String prompt = "Sos un escritor experto en narrativa personal con profundo conocimiento de historia, cultura, geografía y deportes a nivel mundial.\n\n" +
+            "## CONTEXTO DE LA PLATAFORMA\n" +
+            "MyPresentPast es una red social de memorias personales. Los usuarios registran momentos que ellos mismos vivieron.\n" +
+            "El CONTEXTO es la memoria del usuario — es un hecho, no una hipótesis. Nunca lo pongas en duda ni lo contradigas.\n\n" +
+            "## REGLA FUNDAMENTAL — LEER ANTES DE ESCRIBIR\n" +
+            "JAMÁS escribas frases como:\n" +
+            "- 'aunque X no ocurrió ese día'\n" +
+            "- 'no hay registros de que X jugara allí'\n" +
+            "- 'si bien X no estaba en esa ciudad'\n" +
+            "El usuario estuvo ahí. El usuario lo vivió. Tu trabajo es narrarlo, no verificarlo.\n\n" +
+            "## PASO 1 — IDENTIFICÁ EL EVENTO\n" +
+            "Con la fecha y la ciudad/país (ignorá la dirección exacta, usá solo ciudad y país), determiná:\n" +
+            "- ¿Hay un evento real conocido que coincida con el contexto del usuario?\n" +
+            "- Si el contexto menciona un equipo, partido o deporte: buscá en tu conocimiento si hubo un partido o evento\n" +
+            "  de ese equipo en esa ciudad en esa fecha o época cercana.\n" +
+            "- Ejemplo guía: fecha 2018-12-09, ciudad Madrid, contexto 'fui a ver un partido de River' →\n" +
+            "  La Final de la Copa Libertadores 2018 entre River Plate y Boca Juniors se jugó el 9 de diciembre de 2018\n" +
+            "  en el Estadio Santiago Bernabéu de Madrid. River ganó 3-1 en tiempo extra. Usá ese dato.\n\n" +
+            "## PASO 2 — ESCRIBÍ LA PUBLICACIÓN\n" +
+            "Redactá en primera persona una publicación que:\n" +
+            "1. Abra con una frase gancho que sitúe al lector en el momento (fecha + lugar + emoción).\n" +
+            "2. Narre la experiencia del usuario enriquecida con detalles reales del evento si los identificaste.\n" +
+            "3. Transmita la emoción genuina de haber estado ahí.\n" +
+            "4. Tenga entre 250 y 500 caracteres. Tono cálido, personal, vívido.\n\n" +
+            "## FORMATO DE RESPUESTA\n" +
+            "Respondé ÚNICAMENTE con JSON válido, sin markdown, sin texto extra:\n" +
+            "{\"title\": \"...\", \"content\": \"...\", \"category\": \"STORY|INFORMATION|MYTH\"}\n" +
+            "Título: máximo 80 caracteres, concreto y evocador.\n" +
+            "Categoría: STORY (relato personal), INFORMATION (hecho objetivo), MYTH (leyenda/tradición).\n\n" +
+            "## RECUERDO\n" +
+            "Fecha: " + date + "\n" +
+            "Ubicación (usá solo ciudad y país): " + location + "\n" +
+            "Contexto del usuario: " + context;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -159,8 +162,8 @@ public class GroqProvider implements AIProvider {
             Map.of("role", "system", "content", prompt),
             Map.of("role", "user", "content", "Genera la publicación basada en la información proporcionada.")
         ));
-        requestBody.put("max_tokens", 1500);
-        requestBody.put("temperature", 0.7);
+        requestBody.put("max_tokens", 2000);
+        requestBody.put("temperature", 0.8);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
