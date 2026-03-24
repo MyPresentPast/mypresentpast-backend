@@ -10,15 +10,21 @@ import com.mypresentpast.backend.exception.ResourceNotFoundException;
 import com.mypresentpast.backend.model.Post;
 import com.mypresentpast.backend.model.Report;
 import com.mypresentpast.backend.model.User;
+import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.ReportRepository;
 import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.service.PostService;
+import com.mypresentpast.backend.utils.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.*;
+
+import java.util.EnumSet;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +35,8 @@ import static org.mockito.Mockito.*;
 
 class ReportServiceImplTest {
 
+    @Mock
+    private PostRepository postRepository;
     @Mock
     private ReportRepository reportRepository;
     @Mock
@@ -43,6 +51,7 @@ class ReportServiceImplTest {
     private Post testPost;
     private User testUser;
     private User adminUser;
+    private User reporterUser;
 
     @BeforeEach
     void setUp() {
@@ -56,6 +65,10 @@ class ReportServiceImplTest {
 
         adminUser = new User();
         adminUser.setId(99L);
+
+        reporterUser = new User();
+        reporterUser.setId(3L);
+        reporterUser.setProfileUsername("reporter2");
 
         testPost = new Post();
         testPost.setId(2L);
@@ -115,9 +128,9 @@ class ReportServiceImplTest {
         assertThrows(RuntimeException.class, () -> reportService.getReportDetail(99L));
     }
 
+    // Simular el comportamiento del repositorio y servicio
     @Test
     void acceptReport_Success() {
-        // Simular el comportamiento del repositorio y servicio
         when(reportRepository.findById(10L)).thenReturn(Optional.of(testReport));
         when(userRepository.findById(99L)).thenReturn(Optional.of(adminUser));
         when(reportRepository.save(any(Report.class))).thenReturn(testReport);
@@ -133,26 +146,26 @@ class ReportServiceImplTest {
         verify(postService).deletePost(anyLong());
     }
 
+    // Simular que el reporte no existe
     @Test
     void acceptReport_ReportNotFound_ThrowsException() {
-        // Simular que el reporte no existe
         when(reportRepository.findById(10L)).thenReturn(Optional.empty());
         // Asegurarse de que se lance la excepción ResourceNotFoundException
         assertThrows(ResourceNotFoundException.class, () -> reportService.acceptReport(10L, 99L));
     }
 
+    // Cambiar el estado del reporte a REJECTED para simular un estado inválido
     @Test
     void acceptReport_InvalidStatus_ThrowsException() {
-        // Cambiar el estado del reporte a REJECTED para simular un estado inválido
         testReport.setStatus(ReportStatus.REJECTED);
         when(reportRepository.findById(10L)).thenReturn(Optional.of(testReport));
         // Asegurarse de que se lance la excepción BadRequestException
         assertThrows(BadRequestException.class, () -> reportService.acceptReport(10L, 99L));
     }
 
+    // Simular el comportamiento del repositorio y servicio
     @Test
     void rejectReport_Success() {
-        // Simular el comportamiento del repositorio y servicio
         when(reportRepository.findById(10L)).thenReturn(Optional.of(testReport));
         when(userRepository.findById(99L)).thenReturn(Optional.of(adminUser));
         when(reportRepository.save(any(Report.class))).thenReturn(testReport);
@@ -166,20 +179,118 @@ class ReportServiceImplTest {
         assertEquals(ReportStatus.REJECTED, testReport.getStatus());
     }
 
+    // Simular que el reporte no existe
     @Test
     void rejectReport_ReportNotFound_ThrowsException() {
-        // Simular que el reporte no existe
         when(reportRepository.findById(10L)).thenReturn(Optional.empty());
         // asegurarse de que se lance la excepción ResourceNotFoundException
         assertThrows(ResourceNotFoundException.class, () -> reportService.rejectReport(10L, 99L));
     }
 
+    // Cambiar el estado del reporte a ACCEPTED para simular un estado inválido
     @Test
     void rejectReport_InvalidStatus_ThrowsException() {
-        // Cambiar el estado del reporte a ACCEPTED para simular un estado inválido
         testReport.setStatus(ReportStatus.ACCEPTED);
         when(reportRepository.findById(10L)).thenReturn(Optional.of(testReport));
         // asegurarse de que se lance la excepción BadRequestException
         assertThrows(BadRequestException.class, () -> reportService.rejectReport(10L, 99L));
+    }
+
+    // Verifica que al crear un reporte con datos válidos se retorna el mensaje de éxito y se persiste el reporte.
+    @Test
+    void createReport_ValidRequest_ReturnsSuccessMessage() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(3L);
+
+            when(userRepository.findById(3L)).thenReturn(Optional.of(reporterUser));
+            when(postRepository.findById(2L)).thenReturn(Optional.of(testPost));
+            when(reportRepository.existsActiveReportByPostIdAndReporterId(
+                    2L, 3L, EnumSet.of(ReportStatus.PENDING, ReportStatus.ACCEPTED)))
+                    .thenReturn(false);
+
+            ArgumentCaptor<Report> reportCaptor = ArgumentCaptor.forClass(Report.class);
+            when(reportRepository.save(reportCaptor.capture())).thenReturn(testReport);
+
+            ApiResponse response = reportService.createReport(2L, "Motivo de prueba", ReportType.SPAM);
+
+            assertNotNull(response);
+            assertTrue(response.getMessage().contains("Exito"));
+
+            Report saved = reportCaptor.getValue();
+            assertEquals(testPost, saved.getPost());
+            assertEquals(reporterUser, saved.getReporter());
+            assertEquals("Motivo de prueba", saved.getReason());
+            assertEquals(ReportType.SPAM, saved.getType());
+            assertEquals(ReportStatus.PENDING, saved.getStatus());
+
+            verify(reportRepository).save(reportCaptor.getValue());
+        }
+    }
+
+    // Verifica que si el usuario reportero no existe se lanza ResourceNotFoundException.
+    @Test
+    void createReport_ReporterNotFound_ThrowsResourceNotFoundException() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(3L);
+
+            when(userRepository.findById(3L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                    () -> reportService.createReport(2L, "Motivo", ReportType.SPAM));
+
+            verify(postRepository, never()).findById(any());
+        }
+    }
+
+    // Verifica que si la publicación a reportar no existe se lanza ResourceNotFoundException.
+    @Test
+    void createReport_PostNotFound_ThrowsResourceNotFoundException() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(3L);
+
+            when(userRepository.findById(3L)).thenReturn(Optional.of(reporterUser));
+            when(postRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                    () -> reportService.createReport(99L, "Motivo", ReportType.SPAM));
+
+            verify(reportRepository, never()).existsActiveReportByPostIdAndReporterId(any(), any(), any());
+        }
+    }
+
+    // Verifica que un usuario no puede reportar su propia publicación.
+    @Test
+    void createReport_SelfReport_ThrowsBadRequestException() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            // testUser (id=1) es el autor de testPost
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(postRepository.findById(2L)).thenReturn(Optional.of(testPost));
+
+            assertThrows(BadRequestException.class,
+                    () -> reportService.createReport(2L, "Motivo", ReportType.SPAM));
+
+            verify(reportRepository, never()).existsActiveReportByPostIdAndReporterId(any(), any(), any());
+        }
+    }
+
+    // Verifica que no se puede crear un reporte si ya existe uno activo del mismo usuario para la misma publicación.
+    @Test
+    void createReport_ActiveReportAlreadyExists_ThrowsBadRequestException() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(3L);
+
+            when(userRepository.findById(3L)).thenReturn(Optional.of(reporterUser));
+            when(postRepository.findById(2L)).thenReturn(Optional.of(testPost));
+            when(reportRepository.existsActiveReportByPostIdAndReporterId(
+                    2L, 3L, EnumSet.of(ReportStatus.PENDING, ReportStatus.ACCEPTED)))
+                    .thenReturn(true);
+
+            assertThrows(BadRequestException.class,
+                    () -> reportService.createReport(2L, "Motivo", ReportType.SPAM));
+
+            verify(reportRepository, never()).save(any());
+        }
     }
 }
