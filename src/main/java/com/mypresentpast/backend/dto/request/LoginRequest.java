@@ -15,4 +15,6 @@ public class LoginRequest {
     String email;
     @NotBlank
     String password;
+    @NotBlank
+    String recaptchaToken;
 }
