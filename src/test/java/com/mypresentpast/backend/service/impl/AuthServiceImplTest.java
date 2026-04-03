@@ -12,6 +12,7 @@ import com.mypresentpast.backend.repository.UserRepository;
 import com.mypresentpast.backend.repository.VerificationTokenRepository;
 import com.mypresentpast.backend.service.EmailService;
 import com.mypresentpast.backend.service.JwtService;
+import com.mypresentpast.backend.service.RecaptchaService;
 import com.mypresentpast.backend.service.VerificationService;
 import com.mypresentpast.backend.utils.MessageBundle;
 import jakarta.mail.MessagingException;
@@ -50,6 +51,8 @@ class AuthServiceImplTest {
     private VerificationService verificationService;
     @Mock
     private EmailService emailService;
+    @Mock
+    private RecaptchaService recaptchaService;
 
 
     @BeforeEach
@@ -258,6 +261,7 @@ class AuthServiceImplTest {
                 .emailVerified(true)
                 .build();
 
+        when(recaptchaService.verify(any())).thenReturn(true);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, "encodedPassword")).thenReturn(true);
         when(jwtService.getToken(refEq(user))).thenReturn("mocked-jwt");
@@ -281,6 +285,7 @@ class AuthServiceImplTest {
                 .password("ABCDFG1234a")
                 .build();
 
+        when(recaptchaService.verify(any())).thenReturn(true);
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         assertThrows(BadRequestException.class, () -> authService.login(request));
@@ -304,6 +309,7 @@ class AuthServiceImplTest {
                 .emailVerified(true)
                 .build();
 
+        when(recaptchaService.verify(any())).thenReturn(true);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(wrongPassword, "encodedPassword")).thenReturn(false);
 
@@ -338,8 +344,8 @@ class AuthServiceImplTest {
                 .emailVerified(false)
                 .build();
 
+        when(recaptchaService.verify(any())).thenReturn(true);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-
         when(passwordEncoder.matches(password, "encodedPassword")).thenReturn(true);
 
         DisabledException exception = assertThrows(
