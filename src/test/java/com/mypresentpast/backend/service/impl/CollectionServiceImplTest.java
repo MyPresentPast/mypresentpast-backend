@@ -43,6 +43,9 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.mypresentpast.backend.enums.MediaType;
+import com.mypresentpast.backend.model.Location;
+import com.mypresentpast.backend.model.Media;
 
 @ExtendWith(MockitoExtension.class)
 class CollectionServiceImplTest {
@@ -473,12 +476,12 @@ class CollectionServiceImplTest {
         Long postId = 1L;
         List<CollectionPost> collectionPosts = List.of(testCollectionPost);
 
-        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity = 
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
              Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
-            
+
             mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
                          .thenReturn(userId);
-            
+
             when(postRepository.findById(postId)).thenReturn(Optional.of(testPost));
             when(collectionPostRepository.findByPostIdAndCollectionAuthorId(postId, userId))
                 .thenReturn(collectionPosts);
@@ -491,6 +494,484 @@ class CollectionServiceImplTest {
             assertEquals(postId, result.getPostId());
             assertEquals(1, result.getCollectionsContaining().size());
             assertEquals("Test Collection", result.getCollectionsContaining().get(0).getCollectionName());
+        }
+    }
+
+    // Verifica que updateCollection lanza ResourceNotFoundException cuando la colección no pertenece al usuario.
+    @Test
+    void updateCollection_CollectionNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+        UpdateCollectionRequest request = new UpdateCollectionRequest();
+        request.setName("Updated");
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(99L, userId)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.updateCollection(99L, request));
+        }
+    }
+
+    // Verifica que updateCollection lanza BadRequestException cuando el nuevo nombre ya existe en otra colección.
+    @Test
+    void updateCollection_DuplicateName_ThrowsBadRequestException() {
+        Long userId = 1L;
+        UpdateCollectionRequest request = new UpdateCollectionRequest();
+        request.setName("Other Collection");
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorIdAndIdNot("Other Collection", userId, 1L))
+                .thenReturn(true);
+
+            BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> collectionService.updateCollection(1L, request));
+            assertEquals("Ya tienes una colección con ese nombre", ex.getMessage());
+        }
+    }
+
+    // Verifica que updateCollection con nombre null solo actualiza la descripción.
+    @Test
+    void updateCollection_NullName_OnlyUpdatesDescription() {
+        Long userId = 1L;
+        UpdateCollectionRequest request = new UpdateCollectionRequest();
+        request.setName(null);
+        request.setDescription("Only new description");
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(collectionRepository.save(testCollection)).thenReturn(testCollection);
+
+            ApiResponse result = collectionService.updateCollection(1L, request);
+
+            assertNotNull(result);
+            assertEquals("Colección actualizada con éxito", result.getMessage());
+            verify(collectionRepository, org.mockito.Mockito.never()).existsByNameIgnoreCaseAndAuthorIdAndIdNot(any(), any(), any());
+        }
+    }
+
+    // Verifica que updateCollection con descripción null no sobreescribe la descripción existente.
+    @Test
+    void updateCollection_NullDescription_OnlyUpdatesName() {
+        Long userId = 1L;
+        UpdateCollectionRequest request = new UpdateCollectionRequest();
+        request.setName("New Name");
+        request.setDescription(null);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorIdAndIdNot("New Name", userId, 1L))
+                .thenReturn(false);
+            when(collectionRepository.save(testCollection)).thenReturn(testCollection);
+
+            ApiResponse result = collectionService.updateCollection(1L, request);
+
+            assertNotNull(result);
+            assertEquals("Colección actualizada con éxito", result.getMessage());
+        }
+    }
+
+    // Verifica que updateCollection con el mismo nombre (ignorando mayúsculas) no actualiza el nombre.
+    @Test
+    void updateCollection_SameNameIgnoreCase_SkipsDuplicateCheckAndDoesNotChangeName() {
+        Long userId = 1L;
+        UpdateCollectionRequest request = new UpdateCollectionRequest();
+        request.setName("TEST COLLECTION"); // mismo nombre en mayúsculas
+        request.setDescription("Updated desc");
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(collectionRepository.save(testCollection)).thenReturn(testCollection);
+
+            ApiResponse result = collectionService.updateCollection(1L, request);
+
+            assertNotNull(result);
+            verify(collectionRepository, org.mockito.Mockito.never()).existsByNameIgnoreCaseAndAuthorIdAndIdNot(any(), any(), any());
+        }
+    }
+
+    // Verifica que getCollectionPosts lanza ResourceNotFoundException cuando la colección no existe.
+    @Test
+    void getCollectionPosts_CollectionNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(99L, userId)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.getCollectionPosts(99L));
+        }
+    }
+
+    // Verifica que getCollectionPosts mapea correctamente un post con verificador externo.
+    @Test
+    void getCollectionPosts_PostWithExternalVerifier_MapsVerifiedBy() {
+        Long userId = 1L;
+        User verifierUser = new User();
+        verifierUser.setId(2L);
+        verifierUser.setProfileUsername("verifier");
+        verifierUser.setRole(UserRole.INSTITUTION);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(collectionPostRepository.findByCollectionIdOrderByAddedAtDesc(1L))
+                .thenReturn(List.of(testCollectionPost));
+            when(verificationQueryService.isPostVerified(testPost)).thenReturn(true);
+            when(verificationQueryService.getExternalVerifier(testPost.getId())).thenReturn(verifierUser);
+
+            List<com.mypresentpast.backend.dto.response.PostResponse> result =
+                collectionService.getCollectionPosts(1L);
+
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertNotNull(result.get(0).getVerifiedBy());
+            assertEquals(2L, result.get(0).getVerifiedBy().getId());
+        }
+    }
+
+    // Verifica que getCollectionPosts mapea correctamente un post con ubicación.
+    @Test
+    void getCollectionPosts_PostWithLocation_MapsLocation() {
+        Long userId = 1L;
+        Location location = new Location();
+        location.setId(10L);
+        location.setAddress("Test Street 123");
+        location.setLatitude(-34.6037);
+        location.setLongitude(-58.3816);
+        testPost.setLocation(location);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(collectionPostRepository.findByCollectionIdOrderByAddedAtDesc(1L))
+                .thenReturn(List.of(testCollectionPost));
+            when(verificationQueryService.isPostVerified(testPost)).thenReturn(false);
+            when(verificationQueryService.getExternalVerifier(testPost.getId())).thenReturn(null);
+
+            List<com.mypresentpast.backend.dto.response.PostResponse> result =
+                collectionService.getCollectionPosts(1L);
+
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertNotNull(result.get(0).getLocation());
+            assertEquals("Test Street 123", result.get(0).getLocation().getAddress());
+        }
+    }
+
+    // Verifica que getCollectionPosts mapea correctamente un post con media adjunta.
+    @Test
+    void getCollectionPosts_PostWithMedia_MapsMedia() {
+        Long userId = 1L;
+        Media media = new Media();
+        media.setId(5L);
+        media.setType(MediaType.IMAGE);
+        media.setUrl("https://cloudinary.com/img.jpg");
+        testPost.setMedia(List.of(media));
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(collectionPostRepository.findByCollectionIdOrderByAddedAtDesc(1L))
+                .thenReturn(List.of(testCollectionPost));
+            when(verificationQueryService.isPostVerified(testPost)).thenReturn(false);
+            when(verificationQueryService.getExternalVerifier(testPost.getId())).thenReturn(null);
+
+            List<com.mypresentpast.backend.dto.response.PostResponse> result =
+                collectionService.getCollectionPosts(1L);
+
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertNotNull(result.get(0).getMedia());
+            assertEquals(1, result.get(0).getMedia().size());
+            assertEquals("https://cloudinary.com/img.jpg", result.get(0).getMedia().get(0).getUrl());
+        }
+    }
+
+    // Verifica que getPostCollectionStatus lanza ResourceNotFoundException cuando el post no existe.
+    @Test
+    void getPostCollectionStatus_PostNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(postRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.getPostCollectionStatus(99L));
+        }
+    }
+
+    // Verifica que getPostCollectionStatus lanza BadRequestException cuando el post no está activo.
+    @Test
+    void getPostCollectionStatus_PostNotActive_ThrowsBadRequestException() {
+        Long userId = 1L;
+        testPost.setStatus(PostStatus.DELETED);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+
+            assertThrows(BadRequestException.class,
+                () -> collectionService.getPostCollectionStatus(1L));
+        }
+    }
+
+    // Verifica que addPostToCollection lanza ResourceNotFoundException cuando la colección no existe.
+    @Test
+    void addPostToCollection_CollectionNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(99L, userId)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.addPostToCollection(99L, 1L));
+        }
+    }
+
+    // Verifica que addPostToCollection lanza ResourceNotFoundException cuando el post no existe.
+    @Test
+    void addPostToCollection_PostNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(postRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.addPostToCollection(1L, 99L));
+        }
+    }
+
+    // Verifica que addPostToCollection lanza BadRequestException cuando el post no está activo.
+    @Test
+    void addPostToCollection_PostNotActive_ThrowsBadRequestException() {
+        Long userId = 1L;
+        testPost.setStatus(PostStatus.DISABLED);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+
+            assertThrows(BadRequestException.class,
+                () -> collectionService.addPostToCollection(1L, 1L));
+        }
+    }
+
+    // Verifica que removePostFromCollection lanza ResourceNotFoundException cuando la colección no existe.
+    @Test
+    void removePostFromCollection_CollectionNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(99L, userId)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.removePostFromCollection(99L, 1L));
+        }
+    }
+
+    // Verifica que removePostFromCollection lanza ResourceNotFoundException cuando el post no está en la colección.
+    @Test
+    void removePostFromCollection_PostNotInCollection_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.findByIdAndAuthorId(1L, userId)).thenReturn(Optional.of(testCollection));
+            when(collectionPostRepository.findByCollectionIdAndPostId(1L, 99L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.removePostFromCollection(1L, 99L));
+        }
+    }
+
+    // Verifica que createCollection lanza ResourceNotFoundException cuando el usuario no existe en la base.
+    @Test
+    void createCollection_UserNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+        CreateCollectionRequest request = new CreateCollectionRequest();
+        request.setName("New Collection");
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.countByAuthorId(userId)).thenReturn(0L);
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorId("New Collection", userId)).thenReturn(false);
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.createCollection(request));
+        }
+    }
+
+    // Verifica que createCollectionAndSavePost lanza BadRequestException cuando se alcanza el límite de colecciones.
+    @Test
+    void createCollectionAndSavePost_MaxCollectionsReached_ThrowsBadRequestException() {
+        Long userId = 1L;
+        CreateCollectionAndSavePostRequest request = new CreateCollectionAndSavePostRequest();
+        request.setName("New");
+        request.setPostId(1L);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.countByAuthorId(userId)).thenReturn(20L);
+
+            assertThrows(BadRequestException.class,
+                () -> collectionService.createCollectionAndSavePost(request));
+        }
+    }
+
+    // Verifica que createCollectionAndSavePost lanza BadRequestException cuando el nombre ya existe.
+    @Test
+    void createCollectionAndSavePost_DuplicateName_ThrowsBadRequestException() {
+        Long userId = 1L;
+        CreateCollectionAndSavePostRequest request = new CreateCollectionAndSavePostRequest();
+        request.setName("Existing");
+        request.setPostId(1L);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.countByAuthorId(userId)).thenReturn(0L);
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorId("Existing", userId)).thenReturn(true);
+
+            assertThrows(BadRequestException.class,
+                () -> collectionService.createCollectionAndSavePost(request));
+        }
+    }
+
+    // Verifica que createCollectionAndSavePost lanza ResourceNotFoundException cuando el post no existe.
+    @Test
+    void createCollectionAndSavePost_PostNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+        CreateCollectionAndSavePostRequest request = new CreateCollectionAndSavePostRequest();
+        request.setName("New");
+        request.setPostId(99L);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.countByAuthorId(userId)).thenReturn(0L);
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorId("New", userId)).thenReturn(false);
+            when(postRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.createCollectionAndSavePost(request));
+        }
+    }
+
+    // Verifica que createCollectionAndSavePost lanza BadRequestException cuando el post no está activo.
+    @Test
+    void createCollectionAndSavePost_PostNotActive_ThrowsBadRequestException() {
+        Long userId = 1L;
+        testPost.setStatus(PostStatus.DELETED);
+        CreateCollectionAndSavePostRequest request = new CreateCollectionAndSavePostRequest();
+        request.setName("New");
+        request.setPostId(1L);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.countByAuthorId(userId)).thenReturn(0L);
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorId("New", userId)).thenReturn(false);
+            when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+
+            assertThrows(BadRequestException.class,
+                () -> collectionService.createCollectionAndSavePost(request));
+        }
+    }
+
+    // Verifica que createCollectionAndSavePost lanza ResourceNotFoundException cuando el usuario no existe.
+    @Test
+    void createCollectionAndSavePost_UserNotFound_ThrowsResourceNotFoundException() {
+        Long userId = 1L;
+        CreateCollectionAndSavePostRequest request = new CreateCollectionAndSavePostRequest();
+        request.setName("New");
+        request.setPostId(1L);
+
+        try (MockedStatic<com.mypresentpast.backend.utils.SecurityUtils> mockedSecurity =
+             Mockito.mockStatic(com.mypresentpast.backend.utils.SecurityUtils.class)) {
+
+            mockedSecurity.when(com.mypresentpast.backend.utils.SecurityUtils::getCurrentUserId)
+                         .thenReturn(userId);
+            when(collectionRepository.countByAuthorId(userId)).thenReturn(0L);
+            when(collectionRepository.existsByNameIgnoreCaseAndAuthorId("New", userId)).thenReturn(false);
+            when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                () -> collectionService.createCollectionAndSavePost(request));
         }
     }
 }
