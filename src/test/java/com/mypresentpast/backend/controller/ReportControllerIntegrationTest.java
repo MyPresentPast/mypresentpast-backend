@@ -1,6 +1,5 @@
 package com.mypresentpast.backend.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -10,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class LikeControllerIntegrationTest {
+class ReportControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -31,20 +31,10 @@ class LikeControllerIntegrationTest {
     private UserDetailsService userDetailsService;
 
     @Test
-    void toggleLike_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
-        mockMvc.perform(post("/posts/1/like"))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getLikeStatus_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
-        mockMvc.perform(get("/posts/1/like/status"))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getTotalLikes_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
-        mockMvc.perform(get("/posts/1/likes/count"))
+    void reportPost_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(post("/reports/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"reason\": \"Contenido inapropiado\", \"type\": \"INAPPROPRIATE\"}"))
                 .andExpect(status().isForbidden());
     }
 }

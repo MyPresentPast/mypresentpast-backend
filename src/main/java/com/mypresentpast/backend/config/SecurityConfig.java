@@ -3,6 +3,7 @@ package com.mypresentpast.backend.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -32,7 +33,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authRequest -> authRequest
                         .requestMatchers("/auth/**").permitAll() // Solo los endpoints de auth van a ser publicos.
-                        .requestMatchers(AUTH_WHITELIST).permitAll() // Son endpoints publicos definidos en la constante AUTH_WHITELIST.
+                        .requestMatchers(HttpMethod.GET, GET_WHITELIST).permitAll() // Endpoints de solo lectura públicos (solo GET).
+                        .requestMatchers("/ping").permitAll() // Health check público.
                         .requestMatchers("/posts/*/verify").hasRole("INSTITUTION") // Solo instituciones pueden verificar posts
                         .requestMatchers("/institution-requests/**").hasRole("NORMAL") // Solo usuarios normales pueden gestionar solicitudes de institución
                         .requestMatchers("/admin/**").hasRole("ADMIN") // Solo administradores pueden acceder a endpoints de admin
@@ -47,23 +49,20 @@ public class SecurityConfig {
 
     }
 
-    // Constante donde podemos poner urls sin autenticacion
-    private static final String[] AUTH_WHITELIST = {
-        // Health check
-        "/ping",
-        
-        // Perfiles públicos (para ver sin login)
-        "/profiles/**",
-        
+    // Endpoints de solo lectura accesibles sin autenticación (solo método GET).
+    private static final String[] GET_WHITELIST = {
+        // Perfil público por ID (solo lectura sin login)
+        "/profiles/{id}",
+
         // Posts públicos (consulta sin login)
         "/posts/map",
-        "/posts/random", 
+        "/posts/random",
         "/posts/{id}",
         "/posts/user/{id}",
-        
+
         // Categorías públicas
         "/categories",
-        
+
         // Otros endpoints públicos de consulta
         "/follow/stats/**"
     };

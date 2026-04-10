@@ -1,7 +1,8 @@
 package com.mypresentpast.backend.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.mypresentpast.backend.service.JwtService;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class LikeControllerIntegrationTest {
+class InstitutionRequestControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -31,20 +32,26 @@ class LikeControllerIntegrationTest {
     private UserDetailsService userDetailsService;
 
     @Test
-    void toggleLike_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
-        mockMvc.perform(post("/posts/1/like"))
+    void getMyRequests_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(get("/institution-requests/my"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void getLikeStatus_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
-        mockMvc.perform(get("/posts/1/like/status"))
+    void createRequest_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(multipart("/institution-requests"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void getTotalLikes_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
-        mockMvc.perform(get("/posts/1/likes/count"))
+    void cancelRequest_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(delete("/institution-requests/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void canCreateNewRequest_ShouldReturnForbidden_WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(get("/institution-requests/can-create"))
                 .andExpect(status().isForbidden());
     }
 }
