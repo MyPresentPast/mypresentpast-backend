@@ -11,6 +11,7 @@ import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.enums.Category;
 import com.mypresentpast.backend.enums.MediaType;
 import com.mypresentpast.backend.enums.PostStatus;
+import com.mypresentpast.backend.exception.BadRequestException;
 import com.mypresentpast.backend.exception.ResourceNotFoundException;
 import com.mypresentpast.backend.model.Location;
 import com.mypresentpast.backend.model.Media;
@@ -320,6 +321,11 @@ public class PostServiceImpl implements PostService {
         // 1. Buscar el post existente
         Post existingPost = postRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada con id: " + id));
+
+        // Validar que el post no esté eliminado
+        if (existingPost.getStatus() == PostStatus.DELETED) {
+            throw new BadRequestException("No se puede editar una publicación eliminada");
+        }
 
         // 2. Validar que el autor existe
         User author = userRepository.findById(request.getAuthorId())
