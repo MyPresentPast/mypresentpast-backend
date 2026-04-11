@@ -121,12 +121,17 @@ class JwtServiceImplTest {
         assertEquals("john@example.com", username);
     }
 
-    // Un token con el último carácter de la firma modificado debe lanzar excepción de JWT.
+    // Un token con un carácter central de la firma modificado debe lanzar excepción de JWT.
     @Test
     void getUsernameFromToken_TamperedSignature_ThrowsJwtException() {
         User user = validUserMock();
         String token = jwtService.getToken(user);
-        String tampered = token.substring(0, token.length() - 1) + "X";
+        String[] parts = token.split("\\.");
+        String signature = parts[2];
+        int mid = signature.length() / 2;
+        char replacement = signature.charAt(mid) == 'A' ? 'B' : 'A';
+        String tamperedSignature = signature.substring(0, mid) + replacement + signature.substring(mid + 1);
+        String tampered = parts[0] + "." + parts[1] + "." + tamperedSignature;
 
         assertThrows(Exception.class, () -> jwtService.getUsernameFromToken(tampered));
     }
