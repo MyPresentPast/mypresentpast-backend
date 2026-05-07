@@ -31,6 +31,16 @@ public interface VerificationService {
     ApiResponse validateVerificationToken(String token);
 
     /**
+     * Inicia el flujo de cambio de email: crea un token con el nuevo email pendiente y envía
+     * un correo de verificación a esa dirección. El cambio se aplica solo al confirmar.
+     *
+     * @param user       Usuario que solicita el cambio.
+     * @param newEmail   Nuevo email al que se le enviará la verificación.
+     * @throws MessagingException Si ocurre un error al enviar el correo.
+     */
+    void initiateEmailChange(User user, String newEmail) throws MessagingException;
+
+    /**
      * Reenvía un correo de verificación a un usuario cuyo email no ha sido confirmado aún.
      * Solo funciona si el token existente aún no ha expirado.
      *

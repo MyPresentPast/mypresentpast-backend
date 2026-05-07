@@ -26,4 +26,5 @@ public class ProfileResponse {
     private Long postCount;
     private Long followerCount;
     private Long followingCount;
+    private String pendingEmail;
 }

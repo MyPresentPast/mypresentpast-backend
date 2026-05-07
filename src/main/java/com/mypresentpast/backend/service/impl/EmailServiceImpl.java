@@ -28,6 +28,7 @@ public class EmailServiceImpl implements EmailService {
             Context context = new Context();
             context.setVariable("name", request.getName());
             context.setVariable("verificationUrl", request.getVerificationUrl());
+            context.setVariable("emailChange", request.isEmailChange());
 
             String contentHtml = templateEngine.process("email", context);
 

@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 public class ProfileUpdateResponse {
     private Long id;
     private String profileUsername;
-    private String email;
     private String name;
     private String lastName;
     private String token;

@@ -22,6 +22,13 @@ public class MessageBundle {
     public static final String LOGIN_FAILED = "Email o contraseña incorrectos";
     public static final String USER_DISABLED = "El usuario no está habilitado para iniciar sesión";
 
+    // Profile - Email change
+    public static final String EMAIL_CHANGE_VERIFICATION_SENT =
+        "Se envió un correo de verificación a %s. El cambio se aplicará cuando lo confirmes desde ese correo.";
+    public static final String EMAIL_CHANGE_CONFIRMED = "Email actualizado correctamente";
+    public static final String EMAIL_CHANGE_PENDING_NOT_FOUND = "No hay ningún cambio de email pendiente";
+    public static final String EMAIL_CHANGE_PASSWORD_REQUIRED = "Debés confirmar tu contraseña para cambiar el email";
+
     // Profile
     public static final String AVATAR_FILE_REQUIRED = "La imagen es obligatoria para actualizar el avatar";
     public static final String AVATAR_FILE_TOO_LARGE = "La imagen seleccionada supera el tamaño máximo permitido de %d MB.";

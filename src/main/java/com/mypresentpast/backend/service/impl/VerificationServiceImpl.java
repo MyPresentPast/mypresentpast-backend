@@ -46,24 +46,47 @@ public class VerificationServiceImpl implements VerificationService {
 
     @Override
     public ApiResponse validateVerificationToken(String token) {
-        // busca el token
         VerificationToken vToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageBundle.TOKEN_NOT_FOUND));
-        // valida si no esta vencido
+
         if (vToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             throw new BadRequestException(MessageBundle.TOKEN_EXPIRED);
         }
-        // actualiza el usuario para que el email este verificado y elimina el token
+
         User user = vToken.getUser();
+
+        if (vToken.getPendingEmail() != null) {
+            user.setEmail(vToken.getPendingEmail());
+            userRepository.save(user);
+            tokenRepository.delete(vToken);
+            return ApiResponse.builder().message(MessageBundle.EMAIL_CHANGE_CONFIRMED).build();
+        }
+
         user.setEmailVerified(true);
         userRepository.save(user);
-
-        // El token ya no sirve más
         tokenRepository.delete(vToken);
+        return ApiResponse.builder().message("Email confirmado con éxito").build();
+    }
 
-        return ApiResponse.builder()
-                .message("Email confirmado con éxito")
-                .build();
+    @Override
+    public void initiateEmailChange(User user, String newEmail) throws MessagingException {
+        tokenRepository.deleteByUser(user);
+
+        String tokenValue = UUID.randomUUID().toString();
+        VerificationToken verificationToken = new VerificationToken();
+        verificationToken.setToken(tokenValue);
+        verificationToken.setUser(user);
+        verificationToken.setExpiryDate(LocalDateTime.now().plusHours(EXPIRATION_HOURS));
+        verificationToken.setPendingEmail(newEmail);
+        tokenRepository.save(verificationToken);
+
+        EmailRequest emailRequest = new EmailRequest();
+        emailRequest.setRecipient(newEmail);
+        emailRequest.setSubject("Confirma tu nuevo email en MyPresentPast");
+        emailRequest.setName(user.getName() + " " + user.getLastName());
+        emailRequest.setVerificationUrl("http://localhost:4200/verify-success?token=" + tokenValue);
+        emailRequest.setEmailChange(true);
+        emailService.sendMail(emailRequest);
     }
 
     @Override

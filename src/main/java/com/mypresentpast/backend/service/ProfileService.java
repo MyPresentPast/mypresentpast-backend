@@ -2,8 +2,11 @@ package com.mypresentpast.backend.service;
 
 import com.mypresentpast.backend.dto.request.ProfileUpdateRequest;
 import com.mypresentpast.backend.dto.request.profile.ChangePasswordRequest;
+import com.mypresentpast.backend.dto.request.profile.EmailChangeRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.ProfileResponse;
 import com.mypresentpast.backend.dto.response.ProfileUpdateResponse;
+import jakarta.mail.MessagingException;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -38,6 +41,29 @@ public interface ProfileService {
      * @param request contiene la contraseña actual y la nueva
      */
     void changePassword(Long userId, ChangePasswordRequest request);
+
+    /**
+     * Inicia el flujo de cambio de email: valida contraseña, verifica unicidad del nuevo email
+     * y envía un correo de verificación al nuevo email.
+     *
+     * @param request contiene el nuevo email y la contraseña de confirmación
+     * @return respuesta con mensaje de confirmación del envío
+     * @throws MessagingException si ocurre un error al enviar el correo
+     */
+    ApiResponse initiateEmailChange(EmailChangeRequest request) throws MessagingException;
+
+    /**
+     * Cancela un cambio de email pendiente eliminando el token asociado.
+     */
+    void cancelEmailChange();
+
+    /**
+     * Reenvía el correo de verificación para un cambio de email pendiente.
+     *
+     * @return respuesta con mensaje de confirmación del reenvío
+     * @throws MessagingException si ocurre un error al enviar el correo
+     */
+    ApiResponse resendEmailChange() throws MessagingException;
 
     /**
      * Sube una imagen de avatar del usuario a Cloudinary.

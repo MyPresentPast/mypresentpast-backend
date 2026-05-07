@@ -188,4 +188,47 @@ class VerificationServiceImplTest {
 
         verify(emailService, never()).sendMail(any());
     }
+
+    // ── validateVerificationToken (flujo email change) ─────────────────────
+
+    // Verifica que un token con pendingEmail aplica el nuevo email al usuario, elimina el token y retorna EMAIL_CHANGE_CONFIRMED.
+    @Test
+    void validateVerificationToken_PendingEmailToken_AppliesEmailChangeAndDeletesToken() {
+        testToken.setPendingEmail("newemail@example.com");
+        when(tokenRepository.findByToken("test-token-123")).thenReturn(Optional.of(testToken));
+
+        ApiResponse response = verificationService.validateVerificationToken("test-token-123");
+
+        assertEquals("newemail@example.com", user.getEmail());
+        verify(userRepository).save(user);
+        verify(tokenRepository).delete(testToken);
+        assertEquals(MessageBundle.EMAIL_CHANGE_CONFIRMED, response.getMessage());
+    }
+
+    // ── initiateEmailChange ────────────────────────────────────────────────
+
+    // Verifica que se elimina el token anterior, se persiste uno nuevo con pendingEmail y se envía el correo con los campos correctos.
+    @Test
+    void initiateEmailChange_ValidRequest_DeletesOldTokenCreatesNewAndSendsEmail() throws MessagingException {
+        ArgumentCaptor<VerificationToken> tokenCaptor = ArgumentCaptor.forClass(VerificationToken.class);
+        ArgumentCaptor<EmailRequest> emailCaptor = ArgumentCaptor.forClass(EmailRequest.class);
+
+        verificationService.initiateEmailChange(user, "newemail@example.com");
+
+        verify(tokenRepository).deleteByUser(user);
+        verify(tokenRepository).save(tokenCaptor.capture());
+        VerificationToken savedToken = tokenCaptor.getValue();
+        assertEquals(user, savedToken.getUser());
+        assertEquals("newemail@example.com", savedToken.getPendingEmail());
+        assertNotNull(savedToken.getToken());
+        assertTrue(savedToken.getExpiryDate().isAfter(LocalDateTime.now().plusHours(23)));
+
+        verify(emailService).sendMail(emailCaptor.capture());
+        EmailRequest sentEmail = emailCaptor.getValue();
+        assertEquals("newemail@example.com", sentEmail.getRecipient());
+        assertEquals("Confirma tu nuevo email en MyPresentPast", sentEmail.getSubject());
+        assertEquals("John Doe", sentEmail.getName());
+        assertTrue(sentEmail.getVerificationUrl().contains(savedToken.getToken()));
+        assertTrue(sentEmail.isEmailChange());
+    }
 }

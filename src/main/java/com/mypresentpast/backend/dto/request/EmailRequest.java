@@ -10,5 +10,6 @@ public class EmailRequest {
     private String subject;
     private String name;
     private String verificationUrl;
+    private boolean emailChange;
 
 }

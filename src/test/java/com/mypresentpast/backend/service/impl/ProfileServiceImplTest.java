@@ -2,19 +2,25 @@ package com.mypresentpast.backend.service.impl;
 
 import com.mypresentpast.backend.dto.request.ProfileUpdateRequest;
 import com.mypresentpast.backend.dto.request.profile.ChangePasswordRequest;
+import com.mypresentpast.backend.dto.request.profile.EmailChangeRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.ProfileResponse;
 import com.mypresentpast.backend.dto.response.ProfileUpdateResponse;
+import com.mypresentpast.backend.utils.MessageBundle;
 import com.mypresentpast.backend.enums.PostStatus;
 import com.mypresentpast.backend.model.UserRole;
 import com.mypresentpast.backend.exception.BadRequestException;
 import com.mypresentpast.backend.exception.ResourceNotFoundException;
 import com.mypresentpast.backend.exception.UnauthorizedException;
 import com.mypresentpast.backend.model.User;
+import com.mypresentpast.backend.model.VerificationToken;
 import com.mypresentpast.backend.repository.FollowRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
+import com.mypresentpast.backend.repository.VerificationTokenRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
 import com.mypresentpast.backend.service.JwtService;
+import com.mypresentpast.backend.service.VerificationService;
 import com.mypresentpast.backend.utils.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,12 +56,17 @@ class ProfileServiceImplTest {
     private CloudinaryService cloudinaryService;
     @Mock
     private JwtService jwtService;
+    @Mock
+    private VerificationTokenRepository tokenRepository;
+    @Mock
+    private VerificationService verificationService;
 
     @InjectMocks
     private ProfileServiceImpl profileService;
 
     // ── Datos de test reutilizables ────────────────────────────────────────
     private User testUser;
+    private VerificationToken testToken;
 
     // ── Setup ──────────────────────────────────────────────────────────────
     @BeforeEach
@@ -71,11 +82,16 @@ class ProfileServiceImplTest {
                 .avatar("https://cloudinary.com/avatar.jpg")
                 .password("encodedPassword")
                 .build();
+
+        testToken = new VerificationToken();
+        testToken.setToken("token-abc123");
+        testToken.setUser(testUser);
+        testToken.setPendingEmail("newemail@example.com");
     }
 
     // ── getProfile ─────────────────────────────────────────────────────────
 
-    // Verifica que el usuario autenticado viendo su propio perfil recibe el email y isSelf=true.
+    // Verifica que el usuario autenticado viendo su propio perfil recibe email, pendingEmail e isSelf=true.
     @Test
     void getProfile_AuthenticatedUserViewingOwnProfile_ReturnsSelfProfileWithEmail() {
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
@@ -84,15 +100,17 @@ class ProfileServiceImplTest {
             when(followRepository.countByFolloweeId(1L)).thenReturn(10L);
             when(followRepository.countByFollowerId(1L)).thenReturn(5L);
             when(postRepository.countByAuthorIdAndStatus(1L, PostStatus.ACTIVE)).thenReturn(3L);
+            when(tokenRepository.findByUser(testUser)).thenReturn(Optional.empty());
 
             ProfileResponse response = profileService.getProfile(1L);
 
             assertNotNull(response);
             assertEquals(1L, response.getId());
             assertEquals("testuser", response.getProfileUsername());
-            assertEquals("test@example.com", response.getEmail()); // email incluido por ser perfil propio
+            assertEquals("test@example.com", response.getEmail());
+            assertNull(response.getPendingEmail());
             assertTrue(response.getIsSelf());
-            assertFalse(response.getFollowing()); // no puede seguirse a sí mismo
+            assertFalse(response.getFollowing());
             assertEquals(10L, response.getFollowerCount());
             assertEquals(5L, response.getFollowingCount());
             assertEquals(3L, response.getPostCount());
@@ -163,21 +181,19 @@ class ProfileServiceImplTest {
 
     // ── updateProfile ──────────────────────────────────────────────────────
 
-    // Verifica que los campos del perfil se actualizan correctamente y se retorna un nuevo JWT.
+    // Verifica que los campos del perfil (sin email) se actualizan correctamente y se retorna un nuevo JWT.
     @Test
     void updateProfile_ValidData_UpdatesFieldsAndReturnsNewToken() {
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
 
             ProfileUpdateRequest request = ProfileUpdateRequest.builder()
-                    .email("new@example.com")
                     .profileUsername("newuser")
                     .name("Jane")
                     .lastName("Smith")
                     .build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
             when(userRepository.existsByProfileUsername("newuser")).thenReturn(false);
             when(userRepository.save(testUser)).thenReturn(testUser);
             when(jwtService.getToken(testUser)).thenReturn("new-jwt-token");
@@ -187,7 +203,6 @@ class ProfileServiceImplTest {
             assertNotNull(response);
             assertEquals(1L, response.getId());
             assertEquals("newuser", response.getProfileUsername());
-            assertEquals("new@example.com", response.getEmail());
             assertEquals("new-jwt-token", response.getToken());
             verify(userRepository).save(testUser);
         }
@@ -202,22 +217,6 @@ class ProfileServiceImplTest {
 
             ProfileUpdateRequest request = ProfileUpdateRequest.builder().build();
             assertThrows(ResourceNotFoundException.class,
-                    () -> profileService.updateProfile(request));
-
-            verify(userRepository, never()).save(any());
-        }
-    }
-
-    // Verifica que cambiar a un email ya registrado lanza DataIntegrityViolationException.
-    @Test
-    void updateProfile_DuplicateEmail_ThrowsDataIntegrityViolationException() {
-        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
-            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
-
-            ProfileUpdateRequest request = ProfileUpdateRequest.builder().email("taken@example.com").build();
-            assertThrows(DataIntegrityViolationException.class,
                     () -> profileService.updateProfile(request));
 
             verify(userRepository, never()).save(any());
@@ -371,6 +370,194 @@ class ProfileServiceImplTest {
                     () -> profileService.uploadAvatar(mock(MultipartFile.class)));
 
             verify(cloudinaryService, never()).uploadAvatar(any(), any());
+        }
+    }
+
+    // ── initiateEmailChange ────────────────────────────────────────────────
+
+    // Verifica que con password y email válidos se delega al verificationService y se retorna el mensaje correcto.
+    @Test
+    void initiateEmailChange_ValidRequest_DelegatesToVerificationServiceAndReturnsMessage() throws Exception {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches("plainPassword", "encodedPassword")).thenReturn(true);
+            when(userRepository.existsByEmail("newemail@example.com")).thenReturn(false);
+
+            EmailChangeRequest request = new EmailChangeRequest();
+            request.setNewEmail("newemail@example.com");
+            request.setPassword("plainPassword");
+
+            ApiResponse response = profileService.initiateEmailChange(request);
+
+            String expectedMessage = String.format(MessageBundle.EMAIL_CHANGE_VERIFICATION_SENT, "newemail@example.com");
+            assertEquals(expectedMessage, response.getMessage());
+            verify(verificationService).initiateEmailChange(testUser, "newemail@example.com");
+        }
+    }
+
+    // Verifica que iniciar cambio de email para un usuario inexistente lanza ResourceNotFoundException.
+    @Test
+    void initiateEmailChange_UserNotFound_ThrowsResourceNotFoundException() throws Exception {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            EmailChangeRequest request = new EmailChangeRequest();
+            request.setNewEmail("newemail@example.com");
+            request.setPassword("plainPassword");
+
+            assertThrows(ResourceNotFoundException.class,
+                    () -> profileService.initiateEmailChange(request));
+
+            verify(verificationService, never()).initiateEmailChange(any(), any());
+        }
+    }
+
+    // Verifica que una contraseña incorrecta lanza BadRequestException sin llegar a verificar el email.
+    @Test
+    void initiateEmailChange_WrongPassword_ThrowsBadRequestException() throws Exception {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);
+
+            EmailChangeRequest request = new EmailChangeRequest();
+            request.setNewEmail("newemail@example.com");
+            request.setPassword("wrongPassword");
+
+            assertThrows(BadRequestException.class,
+                    () -> profileService.initiateEmailChange(request));
+
+            verify(verificationService, never()).initiateEmailChange(any(), any());
+        }
+    }
+
+    // Verifica que solicitar un email ya registrado lanza DataIntegrityViolationException.
+    @Test
+    void initiateEmailChange_DuplicateEmail_ThrowsDataIntegrityViolationException() throws Exception {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches("plainPassword", "encodedPassword")).thenReturn(true);
+            when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
+
+            EmailChangeRequest request = new EmailChangeRequest();
+            request.setNewEmail("taken@example.com");
+            request.setPassword("plainPassword");
+
+            assertThrows(DataIntegrityViolationException.class,
+                    () -> profileService.initiateEmailChange(request));
+
+            verify(verificationService, never()).initiateEmailChange(any(), any());
+        }
+    }
+
+    // ── cancelEmailChange ──────────────────────────────────────────────────
+
+    // Verifica que cancelar un cambio de email pendiente elimina el token correctamente.
+    @Test
+    void cancelEmailChange_PendingTokenExists_DeletesToken() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(tokenRepository.findByUser(testUser)).thenReturn(Optional.of(testToken));
+
+            profileService.cancelEmailChange();
+
+            verify(tokenRepository).delete(testToken);
+        }
+    }
+
+    // Verifica que cancelar el cambio de email de un usuario inexistente lanza ResourceNotFoundException.
+    @Test
+    void cancelEmailChange_UserNotFound_ThrowsResourceNotFoundException() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                    () -> profileService.cancelEmailChange());
+
+            verify(tokenRepository, never()).delete(any());
+        }
+    }
+
+    // Verifica que cancelar cuando no hay token con email pendiente lanza BadRequestException.
+    @Test
+    void cancelEmailChange_NoPendingEmailToken_ThrowsBadRequestException() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(tokenRepository.findByUser(testUser)).thenReturn(Optional.empty());
+
+            assertThrows(BadRequestException.class,
+                    () -> profileService.cancelEmailChange());
+
+            verify(tokenRepository, never()).delete(any());
+        }
+    }
+
+    // Verifica que un token existente pero sin pendingEmail es filtrado y lanza BadRequestException.
+    @Test
+    void cancelEmailChange_TokenWithNullPendingEmail_ThrowsBadRequestException() {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            testToken.setPendingEmail(null);
+            when(tokenRepository.findByUser(testUser)).thenReturn(Optional.of(testToken));
+
+            assertThrows(BadRequestException.class,
+                    () -> profileService.cancelEmailChange());
+
+            verify(tokenRepository, never()).delete(any());
+        }
+    }
+
+    // ── resendEmailChange ──────────────────────────────────────────────────
+
+    // Verifica que reenviar la verificación delega al verificationService con el pendingEmail del token y retorna el mensaje correcto.
+    @Test
+    void resendEmailChange_PendingTokenExists_DelegatesToVerificationServiceAndReturnsMessage() throws Exception {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(tokenRepository.findByUser(testUser)).thenReturn(Optional.of(testToken));
+
+            ApiResponse response = profileService.resendEmailChange();
+
+            String expectedMessage = String.format(MessageBundle.EMAIL_CHANGE_VERIFICATION_SENT, "newemail@example.com");
+            assertEquals(expectedMessage, response.getMessage());
+            verify(verificationService).initiateEmailChange(testUser, "newemail@example.com");
+        }
+    }
+
+    // Verifica que reenviar la verificación de un usuario inexistente lanza ResourceNotFoundException.
+    @Test
+    void resendEmailChange_UserNotFound_ThrowsResourceNotFoundException() throws Exception {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,
+                    () -> profileService.resendEmailChange());
+
+            verify(verificationService, never()).initiateEmailChange(any(), any());
+        }
+    }
+
+    // Verifica que reenviar cuando no hay token con email pendiente lanza BadRequestException.
+    @Test
+    void resendEmailChange_NoPendingEmailToken_ThrowsBadRequestException() throws Exception {
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(tokenRepository.findByUser(testUser)).thenReturn(Optional.empty());
+
+            assertThrows(BadRequestException.class,
+                    () -> profileService.resendEmailChange());
+
+            verify(verificationService, never()).initiateEmailChange(any(), any());
         }
     }
 }
