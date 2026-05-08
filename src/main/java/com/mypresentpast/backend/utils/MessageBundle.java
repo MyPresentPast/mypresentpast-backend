@@ -17,7 +17,7 @@ public class MessageBundle {
     public static final String PASSWORD_INVALID = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.";
     public static final String CURRENT_PASSWORD_INVALID = "Credenciales inválidas.";
     public static final String NEW_PASSWORD_SAME_AS_OLD = "La nueva contraseña no puede ser igual a la actual.";
-    public static final String DUPLICATE_EMAIL = "El email ya está registrado: [%s]";
+    public static final String DUPLICATE_EMAIL = "Este email ya está en uso";
     public static final String DUPLICATE_USERNAME = "El nombre de usuario ya está en uso: %s";
     public static final String LOGIN_FAILED = "Email o contraseña incorrectos";
     public static final String USER_DISABLED = "El usuario no está habilitado para iniciar sesión";
@@ -27,7 +27,7 @@ public class MessageBundle {
         "Se envió un correo de verificación a %s. El cambio se aplicará cuando lo confirmes desde ese correo.";
     public static final String EMAIL_CHANGE_CONFIRMED = "Email actualizado correctamente";
     public static final String EMAIL_CHANGE_PENDING_NOT_FOUND = "No hay ningún cambio de email pendiente";
-    public static final String EMAIL_CHANGE_PASSWORD_REQUIRED = "Debés confirmar tu contraseña para cambiar el email";
+    public static final String EMAIL_CHANGE_PASSWORD_REQUIRED = "Contraseña incorrecta";
 
     // Profile
     public static final String AVATAR_FILE_REQUIRED = "La imagen es obligatoria para actualizar el avatar";

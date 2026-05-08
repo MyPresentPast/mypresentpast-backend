@@ -57,6 +57,7 @@ public class VerificationServiceImpl implements VerificationService {
 
         if (vToken.getPendingEmail() != null) {
             user.setEmail(vToken.getPendingEmail());
+            user.setEmailVerified(true);
             userRepository.save(user);
             tokenRepository.delete(vToken);
             return ApiResponse.builder().message(MessageBundle.EMAIL_CHANGE_CONFIRMED).build();

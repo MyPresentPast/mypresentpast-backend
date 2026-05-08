@@ -225,7 +225,7 @@ public class ProfileServiceImpl implements ProfileService {
         if (newEmail != null) newEmail = newEmail.toLowerCase();
 
         if (userRepository.existsByEmail(newEmail)) {
-            throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_EMAIL, newEmail));
+            throw new DataIntegrityViolationException(MessageBundle.DUPLICATE_EMAIL);
         }
 
         verificationService.initiateEmailChange(user, newEmail);
