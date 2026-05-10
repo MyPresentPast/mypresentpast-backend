@@ -2,11 +2,14 @@ package com.mypresentpast.backend.controller;
 
 import com.mypresentpast.backend.dto.request.ProfileUpdateRequest;
 import com.mypresentpast.backend.dto.request.profile.ChangePasswordRequest;
+import com.mypresentpast.backend.dto.request.profile.EmailChangeRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.ProfileResponse;
 import com.mypresentpast.backend.dto.response.ProfileUpdateResponse;
 import com.mypresentpast.backend.dto.response.PostResponse;
 import com.mypresentpast.backend.dto.response.UrlResponse;
 import java.util.List;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +61,31 @@ public interface ProfileController {
      */
     @PutMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<UrlResponse> uploadMyAvatar(@RequestPart("avatar") MultipartFile file);
+
+    /**
+     * Inicia el flujo de cambio de email: valida contraseña y envía verificación al nuevo email.
+     *
+     * @param request contiene el nuevo email y la contraseña de confirmación
+     * @return mensaje confirmando el envío del correo de verificación
+     */
+    @PostMapping("/me/email-change")
+    ResponseEntity<ApiResponse> initiateEmailChange(@Valid @RequestBody EmailChangeRequest request) throws MessagingException;
+
+    /**
+     * Cancela un cambio de email pendiente eliminando el token de verificación.
+     *
+     * @return 204 No Content
+     */
+    @DeleteMapping("/me/pending-email")
+    ResponseEntity<Void> cancelEmailChange();
+
+    /**
+     * Reenvía el correo de verificación para un cambio de email pendiente.
+     *
+     * @return mensaje confirmando el reenvío
+     */
+    @PostMapping("/me/email-change/resend")
+    ResponseEntity<ApiResponse> resendEmailChange() throws MessagingException;
 
     /**
      * Obtiene las publicaciones que el usuario autenticado ha likeado.

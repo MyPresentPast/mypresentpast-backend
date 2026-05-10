@@ -25,4 +25,7 @@ public class VerificationToken {
     @Column(name = "expiry_date", nullable = false)
     private LocalDateTime expiryDate;
 
+    @Column(name = "pending_email")
+    private String pendingEmail;
+
 }

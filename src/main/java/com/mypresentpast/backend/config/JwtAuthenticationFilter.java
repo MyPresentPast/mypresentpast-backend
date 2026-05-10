@@ -47,8 +47,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
         email = jwtService.getUsernameFromToken(token);
 
         if(email != null && Objects.isNull(SecurityContextHolder.getContext().getAuthentication())) {
-
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            UserDetails userDetails;
+            try {
+                userDetails = userDetailsService.loadUserByUsername(email);
+            } catch (org.springframework.security.core.userdetails.UsernameNotFoundException e) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
             if(jwtService.isTokenValid(token, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

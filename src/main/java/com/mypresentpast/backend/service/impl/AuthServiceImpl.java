@@ -100,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
 
             if (existingUser.isEmailVerified()) {
                 // Caso 1: usuario ya verificado → no se puede registrar de nuevo
-                throw new DataIntegrityViolationException(String.format(MessageBundle.DUPLICATE_EMAIL, request.getEmail()));
+                throw new DataIntegrityViolationException(MessageBundle.DUPLICATE_EMAIL);
             } else {
                 // Caso 2: usuario no verificado
                 VerificationToken vToken = verificationTokenRepository.findByUser(existingUser)

@@ -2,6 +2,8 @@ package com.mypresentpast.backend.service.impl;
 
 import com.mypresentpast.backend.dto.request.ProfileUpdateRequest;
 import com.mypresentpast.backend.dto.request.profile.ChangePasswordRequest;
+import com.mypresentpast.backend.dto.request.profile.EmailChangeRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.ProfileResponse;
 import com.mypresentpast.backend.dto.response.ProfileUpdateResponse;
 import com.mypresentpast.backend.enums.PostStatus;
@@ -9,15 +11,19 @@ import com.mypresentpast.backend.exception.BadRequestException;
 import com.mypresentpast.backend.exception.ResourceNotFoundException;
 import com.mypresentpast.backend.exception.UnauthorizedException;
 import com.mypresentpast.backend.model.User;
+import com.mypresentpast.backend.model.VerificationToken;
 import com.mypresentpast.backend.repository.FollowRepository;
 import com.mypresentpast.backend.repository.PostRepository;
 import com.mypresentpast.backend.repository.UserRepository;
+import com.mypresentpast.backend.repository.VerificationTokenRepository;
 import com.mypresentpast.backend.service.CloudinaryService;
 import com.mypresentpast.backend.service.JwtService;
 import com.mypresentpast.backend.service.ProfileService;
+import com.mypresentpast.backend.service.VerificationService;
 import com.mypresentpast.backend.utils.CommonFunctions;
 import com.mypresentpast.backend.utils.MessageBundle;
 import com.mypresentpast.backend.utils.SecurityUtils;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -44,6 +50,8 @@ public class ProfileServiceImpl implements ProfileService {
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
     private final JwtService jwtService;
+    private final VerificationTokenRepository tokenRepository;
+    private final VerificationService verificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -86,7 +94,10 @@ public class ProfileServiceImpl implements ProfileService {
             .profileUsername(user.getProfileUsername())
             .name(user.getName())
             .lastName(user.getLastName())
-            .email(isSelf ? user.getEmail() : null) // Solo incluir email si es perfil propio
+            .email(isSelf ? user.getEmail() : null)
+            .pendingEmail(isSelf ? tokenRepository.findByUser(user)
+                .map(VerificationToken::getPendingEmail)
+                .orElse(null) : null)
             .avatarUrl(user.getAvatar())
             .userType(user.getRole())
             .isSelf(isSelf)
@@ -108,7 +119,6 @@ public class ProfileServiceImpl implements ProfileService {
                         String.format(MessageBundle.USER_NOT_FOUND_WITH_ID, userId)));
 
         // Delegar por campo para reducir complejidad y aislar validaciones
-        applyEmailUpdate(user, request.getEmail());
         applyUsernameUpdate(user, request.getProfileUsername());
         applyNameUpdate(user, request.getName());
         applyLastNameUpdate(user, request.getLastName());
@@ -119,36 +129,15 @@ public class ProfileServiceImpl implements ProfileService {
         // Genera token jwt
         String token = jwtService.getToken(saved);
 
-
         // Mapear a DTO de salida
         return new ProfileUpdateResponse(
                 saved.getId(),
                 saved.getProfileUsername(),
-                saved.getEmail(),
                 saved.getName(),
                 saved.getLastName(),
                 token
         );
 
-    }
-
-    /* Normaliza y actualiza el email si fue enviado */
-    private void applyEmailUpdate(User user, String email) {
-        if (email == null) return; // ignorar campos no enviados (PATCH semantics)
-
-        String newEmail = CommonFunctions.safeTrim(email);
-        if (newEmail != null) newEmail = newEmail.toLowerCase(); // emails en minúsculas
-
-        // No-op si no hay cambios (evita hits innecesarios a BD)
-        if (Objects.equals(newEmail, user.getEmail())) return;
-
-        // Validar unicidad solo si cambia (reduce consultas)
-        if (userRepository.existsByEmail(newEmail)) {
-            throw new DataIntegrityViolationException(String.format(
-                    MessageBundle.DUPLICATE_EMAIL, newEmail));
-        }
-
-        user.setEmail(newEmail);
     }
 
     /* Normaliza y actualiza el username si fue enviado */
@@ -219,6 +208,64 @@ public class ProfileServiceImpl implements ProfileService {
 
         userRepository.save(user);
 
+    }
+
+    @Override
+    public ApiResponse initiateEmailChange(EmailChangeRequest request) throws MessagingException {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        String.format(MessageBundle.USER_NOT_FOUND_WITH_ID, userId)));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BadRequestException(MessageBundle.EMAIL_CHANGE_PASSWORD_REQUIRED);
+        }
+
+        String newEmail = CommonFunctions.safeTrim(request.getNewEmail());
+        if (newEmail != null) newEmail = newEmail.toLowerCase();
+
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new DataIntegrityViolationException(MessageBundle.DUPLICATE_EMAIL);
+        }
+
+        verificationService.initiateEmailChange(user, newEmail);
+
+        return ApiResponse.builder()
+                .message(String.format(MessageBundle.EMAIL_CHANGE_VERIFICATION_SENT, newEmail))
+                .build();
+    }
+
+    @Override
+    public void cancelEmailChange() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        String.format(MessageBundle.USER_NOT_FOUND_WITH_ID, userId)));
+
+        VerificationToken token = tokenRepository.findByUser(user)
+                .filter(t -> t.getPendingEmail() != null)
+                .orElseThrow(() -> new BadRequestException(MessageBundle.EMAIL_CHANGE_PENDING_NOT_FOUND));
+
+        tokenRepository.delete(token);
+    }
+
+    @Override
+    public ApiResponse resendEmailChange() throws MessagingException {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        String.format(MessageBundle.USER_NOT_FOUND_WITH_ID, userId)));
+
+        VerificationToken token = tokenRepository.findByUser(user)
+                .filter(t -> t.getPendingEmail() != null)
+                .orElseThrow(() -> new BadRequestException(MessageBundle.EMAIL_CHANGE_PENDING_NOT_FOUND));
+
+        String pendingEmail = token.getPendingEmail();
+        verificationService.initiateEmailChange(user, pendingEmail);
+
+        return ApiResponse.builder()
+                .message(String.format(MessageBundle.EMAIL_CHANGE_VERIFICATION_SENT, pendingEmail))
+                .build();
     }
 
     @Override

@@ -129,7 +129,7 @@ class AuthServiceImplTest {
                 () -> authService.register(request)
         );
 
-        assertEquals(String.format(MessageBundle.DUPLICATE_EMAIL, request.getEmail()), exception.getMessage());
+        assertEquals(MessageBundle.DUPLICATE_EMAIL, exception.getMessage());
     }
 
     @Test

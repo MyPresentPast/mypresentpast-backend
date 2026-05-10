@@ -3,6 +3,8 @@ package com.mypresentpast.backend.controller.impl;
 import com.mypresentpast.backend.controller.ProfileController;
 import com.mypresentpast.backend.dto.request.ProfileUpdateRequest;
 import com.mypresentpast.backend.dto.request.profile.ChangePasswordRequest;
+import com.mypresentpast.backend.dto.request.profile.EmailChangeRequest;
+import com.mypresentpast.backend.dto.response.ApiResponse;
 import com.mypresentpast.backend.dto.response.ProfileResponse;
 import com.mypresentpast.backend.dto.response.ProfileUpdateResponse;
 import com.mypresentpast.backend.dto.response.PostResponse;
@@ -11,6 +13,7 @@ import java.util.List;
 import com.mypresentpast.backend.service.ProfileService;
 import com.mypresentpast.backend.service.PostService;
 import com.mypresentpast.backend.utils.SecurityUtils;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -49,6 +52,22 @@ public class ProfileControllerImpl implements ProfileController {
     public ResponseEntity<UrlResponse> uploadMyAvatar(@RequestPart("avatar") MultipartFile file) {
         String url = profileService.uploadAvatar(file);
         return ResponseEntity.ok(new UrlResponse(url));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> initiateEmailChange(EmailChangeRequest request) throws MessagingException {
+        return ResponseEntity.ok(profileService.initiateEmailChange(request));
+    }
+
+    @Override
+    public ResponseEntity<Void> cancelEmailChange() {
+        profileService.cancelEmailChange();
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> resendEmailChange() throws MessagingException {
+        return ResponseEntity.ok(profileService.resendEmailChange());
     }
 
     @Override

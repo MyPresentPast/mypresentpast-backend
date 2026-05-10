@@ -68,12 +68,21 @@
         <img src="https://res.cloudinary.com/dttgwvnoe/image/upload/v1759452799/logo-my-present-past_boxkdf.jpg" alt="MyPresentPast" width="100" /> <!-- Cambiá por tu logo real -->
     </div>
 
-    <div class="title">Confirma tu correo electrónico</div>
+    <div class="title" th:text="${emailChange} ? 'Confirmá tu nuevo correo electrónico' : 'Confirma tu correo electrónico'">
+        Confirma tu correo electrónico
+    </div>
 
     <div class="message">
         <p>Hola <strong th:text="${name}">Usuario</strong>,</p>
-        <p>Gracias por registrarte en <strong>MyPresentPast</strong>.</p>
-        <p>Haz clic en el botón de abajo para verificar tu dirección de correo electrónico:</p>
+
+        <p th:if="${emailChange}">
+            Recibiste este correo porque solicitaste cambiar el email de tu cuenta en <strong>MyPresentPast</strong>.
+        </p>
+        <p th:unless="${emailChange}">
+            Gracias por registrarte en <strong>MyPresentPast</strong>.
+        </p>
+
+        <p>Hacé clic en el botón de abajo para confirmar tu dirección de correo electrónico:</p>
         <p style="text-align: center;">
             <a th:href="${verificationUrl}"
                style="display: inline-block;
@@ -86,11 +95,18 @@
           text-align: center;
           font-size: 16px;
           margin: 20px auto;
-          border: none;">
+          border: none;"
+               th:text="${emailChange} ? 'Confirmar nuevo email' : 'Confirmar Email'">
                 Confirmar Email
             </a>
         </p>
-        <p>Si no fuiste tú quien se registró, puedes ignorar este correo.</p>
+
+        <p th:if="${emailChange}">
+            Si no fuiste vos quien solicitó este cambio, podés ignorar este correo. Tu email actual no será modificado.
+        </p>
+        <p th:unless="${emailChange}">
+            Si no fuiste vos quien se registró, podés ignorar este correo.
+        </p>
     </div>
 
     <div class="footer">
