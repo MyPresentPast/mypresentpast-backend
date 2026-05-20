@@ -1,0 +1,79 @@
+@startuml DIAG_Publicaciones
+
+' Subdominio: Publicaciones
+' Cubre el modelo de publicación, sus archivos multimedia adjuntos
+' y su localización geográfica opcional.
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor Black
+  BackgroundColor<<Usuarios>> LightGray
+  BorderColor<<Usuarios>> Gray
+  FontColor<<Usuarios>> DimGray
+}
+
+title Subdominio: Publicaciones
+
+' =========== REFERENCIA EXTERNA ===========
+
+class User <<Usuarios>> {
+  - id: Long
+  - profileUsername: String
+}
+
+' =========== ENTIDADES ===========
+
+class Post {
+  - id: Long
+  - title: String
+  - content: String
+  - postedAt: LocalDate
+  - date: LocalDate
+  - isByIA: Boolean
+  - category: Category
+  - status: PostStatus
+}
+
+class Media {
+  - id: Long
+  - type: MediaType
+  - url: String
+  - cloudinaryId: String
+}
+
+class Location {
+  - id: Long
+  - address: String
+  - latitude: Double
+  - longitude: Double
+}
+
+' =========== ENUMS ===========
+
+enum Category {
+  STORY
+  INFORMATION
+  MYTH
+}
+
+enum PostStatus {
+  ACTIVE
+  DISABLED
+  DELETED
+}
+
+' =========== RELACIONES ===========
+
+User "1" *-- "*" Post : author
+Post "1" *-- "*" Media
+Post "*" --> "0..1" Location
+
+Post ..> Category
+Post ..> PostStatus
+
+' =========== NOTAS ===========
+
+note "Todas las clases cuentan con getters y setters\npara sus atributos, generados automáticamente\nmediante Lombok (@Getter, @Setter, @Data)." as NotaLombok
+
+@enduml

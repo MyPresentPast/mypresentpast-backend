@@ -1,0 +1,58 @@
+@startuml DIAG_Colecciones
+
+' Subdominio: Colecciones
+' Permite a los usuarios organizar publicaciones en
+' colecciones personalizadas y nombradas.
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor Black
+  BackgroundColor<<Usuarios>> LightGray
+  BorderColor<<Usuarios>> Gray
+  FontColor<<Usuarios>> DimGray
+  BackgroundColor<<Publicaciones>> LightGray
+  BorderColor<<Publicaciones>> Gray
+  FontColor<<Publicaciones>> DimGray
+}
+
+title Subdominio: Colecciones
+
+' =========== REFERENCIAS EXTERNAS ===========
+
+class User <<Usuarios>> {
+  - id: Long
+  - profileUsername: String
+}
+
+class Post <<Publicaciones>> {
+  - id: Long
+  - title: String
+}
+
+' =========== ENTIDADES ===========
+
+class Collection {
+  - id: Long
+  - name: String
+  - description: String
+  - createdAt: LocalDateTime
+  - updatedAt: LocalDateTime
+}
+
+class CollectionPost {
+  - id: Long
+  - addedAt: LocalDateTime
+}
+
+' =========== RELACIONES ===========
+
+Collection "*" --> "1" User : author
+Collection "1" *-- "*" CollectionPost
+CollectionPost "*" --> "1" Post
+
+' =========== NOTAS ===========
+
+note "Todas las clases cuentan con getters y setters\npara sus atributos, generados automáticamente\nmediante Lombok (@Getter, @Setter, @Data)." as NotaLombok
+
+@enduml

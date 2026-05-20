@@ -1,0 +1,241 @@
+@startuml DIAG_clases_v5.0
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor Black
+}
+
+' =========== PAQUETES Y ENTIDADES ===========
+
+package "Usuarios y Auth" {
+
+  class User {
+    - id: Long
+    - profileUsername: String
+    - password: String
+    - email: String
+    - name: String
+    - lastName: String
+    - role: UserRole
+    - avatar: String
+    - emailVerified: boolean
+  }
+
+  class VerificationToken {
+    - id: Long
+    - token: String
+    - expiryDate: LocalDateTime
+  }
+
+  class InstitutionRequest {
+    - id: Long
+    - institutionName: String
+    - legalAddress: String
+    - documentUrl: String
+    - officialPhone: String
+    - type: InstitutionType
+    - officialRegistryNumber: String
+    - officialWebsite: String
+    - status: RequestStatus
+    - rejectionReason: String
+    - createdAt: LocalDateTime
+    - reviewedAt: LocalDateTime
+  }
+
+  enum UserRole {
+    ADMIN
+    NORMAL
+    INSTITUTION
+  }
+
+  enum InstitutionType {
+    UNIVERSITY
+    SCHOOL
+    MUSEUM
+    GOVERNMENT
+    NGO
+    LIBRARY
+    RESEARCH
+    OTHER
+  }
+
+  enum RequestStatus {
+    PENDING
+    APPROVED
+    REJECTED
+    CANCELLED
+  }
+
+}
+
+package "Publicaciones" {
+
+  class Post {
+    - id: Long
+    - title: String
+    - content: String
+    - postedAt: LocalDate
+    - date: LocalDate
+    - isByIA: Boolean
+    - category: Category
+    - status: PostStatus
+  }
+
+  class Media {
+    - id: Long
+    - type: MediaType
+    - url: String
+    - cloudinaryId: String
+  }
+
+  class Location {
+    - id: Long
+    - address: String
+    - latitude: Double
+    - longitude: Double
+  }
+
+  enum Category {
+    STORY
+    INFORMATION
+    MYTH
+  }
+
+  enum PostStatus {
+    ACTIVE
+    DISABLED
+    DELETED
+  }
+
+
+}
+
+package "Social" {
+
+  class Follow {
+    - id: Long
+  }
+
+  class PostLike {
+    - id: Long
+    - createdAt: LocalDateTime
+  }
+
+}
+
+package "Colecciones" {
+
+  class Collection {
+    - id: Long
+    - name: String
+    - description: String
+    - createdAt: LocalDateTime
+    - updatedAt: LocalDateTime
+  }
+
+  class CollectionPost {
+    - id: Long
+    - addedAt: LocalDateTime
+  }
+
+}
+
+package "Moderación" {
+
+  class Report {
+    - id: Long
+    - reason: String
+    - type: ReportType
+    - status: ReportStatus
+    - createdAt: LocalDateTime
+    - decisionAt: LocalDateTime
+  }
+
+  class PostVerification {
+    - id: Long
+    - verifiedAt: LocalDateTime
+    - isActive: Boolean
+  }
+
+  enum ReportType {
+    SPAM
+    ABUSE
+    COPYRIGHT
+    MISINFORMATION
+    OTHER
+  }
+
+  enum ReportStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+  }
+
+}
+
+' =========== RELACIONES ENTRE ENTIDADES ===========
+
+' ---- COMPOSICIÓN (ciclo de vida dependiente, cascade ALL) ----
+User "1" *-- "*" Post : author
+Post "1" *-- "*" Media
+Collection "1" *-- "*" CollectionPost
+
+' ---- ASOCIACIÓN ----
+Post "*" --> "0..1" Location
+Collection "*" --> "1" User : author
+CollectionPost "*" --> "1" Post
+Follow "*" --> "1" User : follower
+Follow "*" --> "1" User : followee
+PostLike "*" --> "1" User
+PostLike "*" --> "1" Post
+PostVerification "*" --> "1" Post
+PostVerification "*" --> "1" User : verifiedBy
+InstitutionRequest "*" --> "1" User : user
+InstitutionRequest "*" --> "0..1" User : reviewedBy
+Report "*" --> "1" Post
+Report "*" --> "1" User : reporter
+Report "*" --> "0..1" User : decidedBy
+VerificationToken "1" --> "1" User
+
+' =========== USOS DE ENUMS ===========
+
+User ..> UserRole
+Post ..> Category
+Post ..> PostStatus
+InstitutionRequest ..> InstitutionType
+InstitutionRequest ..> RequestStatus
+Report ..> ReportType
+Report ..> ReportStatus
+
+' =========== NOTAS ===========
+
+note bottom of PostVerification
+  Solo puede haber una verificación activa
+  por post a la vez (isActive = true).
+  Solo usuarios con rol INSTITUTION
+  pueden verificar posts ajenos.
+end note
+
+note bottom of Follow
+  Un usuario no puede
+  seguir dos veces al
+  mismo usuario.
+end note
+
+note bottom of PostLike
+  Un usuario no puede dar like
+  más de una vez a la misma
+  publicación.
+end note
+
+note bottom of InstitutionRequest
+  Al ser APPROVED, el role del User
+  cambia a INSTITUTION automáticamente.
+  Solo usuarios con rol NORMAL
+  pueden enviar esta solicitud.
+end note
+
+note "Todas las clases cuentan con getters y setters\npara sus atributos, generados automáticamente\nmediante Lombok (@Getter, @Setter, @Data)." as NotaLombok
+
+@enduml

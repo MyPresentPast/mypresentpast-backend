@@ -1,0 +1,88 @@
+@startuml DIAG_Moderacion
+
+' Subdominio: Moderación
+' Cubre los reportes de publicaciones realizados por usuarios
+' y la verificación de contenido por parte de instituciones.
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor Black
+  BackgroundColor<<Usuarios>> LightGray
+  BorderColor<<Usuarios>> Gray
+  FontColor<<Usuarios>> DimGray
+  BackgroundColor<<Publicaciones>> LightGray
+  BorderColor<<Publicaciones>> Gray
+  FontColor<<Publicaciones>> DimGray
+}
+
+title Subdominio: Moderación
+
+' =========== REFERENCIAS EXTERNAS ===========
+
+class User <<Usuarios>> {
+  - id: Long
+  - profileUsername: String
+}
+
+class Post <<Publicaciones>> {
+  - id: Long
+  - title: String
+}
+
+' =========== ENTIDADES ===========
+
+class Report {
+  - id: Long
+  - reason: String
+  - type: ReportType
+  - status: ReportStatus
+  - createdAt: LocalDateTime
+  - decisionAt: LocalDateTime
+}
+
+class PostVerification {
+  - id: Long
+  - verifiedAt: LocalDateTime
+  - isActive: Boolean
+}
+
+' =========== ENUMS ===========
+
+enum ReportType {
+  SPAM
+  ABUSE
+  COPYRIGHT
+  MISINFORMATION
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+' =========== RELACIONES ===========
+
+Report "*" --> "1" Post
+Report "*" --> "1" User : reporter
+Report "*" --> "0..1" User : decidedBy
+PostVerification "*" --> "1" Post
+PostVerification "*" --> "1" User : verifiedBy
+
+Report ..> ReportType
+Report ..> ReportStatus
+
+' =========== NOTAS ===========
+
+note bottom of PostVerification
+  Solo puede haber una verificación activa
+  por post a la vez (isActive = true).
+  Solo usuarios con rol INSTITUTION
+  pueden verificar posts ajenos.
+end note
+
+note "Todas las clases cuentan con getters y setters\npara sus atributos, generados automáticamente\nmediante Lombok (@Getter, @Setter, @Data)." as NotaLombok
+
+@enduml

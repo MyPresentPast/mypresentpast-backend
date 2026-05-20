@@ -1,0 +1,67 @@
+@startuml DIAG_Social
+
+' Subdominio: Interacciones Sociales
+' Cubre las relaciones de seguimiento entre usuarios
+' y los likes en publicaciones.
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor Black
+  BackgroundColor<<Usuarios>> LightGray
+  BorderColor<<Usuarios>> Gray
+  FontColor<<Usuarios>> DimGray
+  BackgroundColor<<Publicaciones>> LightGray
+  BorderColor<<Publicaciones>> Gray
+  FontColor<<Publicaciones>> DimGray
+}
+
+title Subdominio: Interacciones Sociales
+
+' =========== REFERENCIAS EXTERNAS ===========
+
+class User <<Usuarios>> {
+  - id: Long
+  - profileUsername: String
+}
+
+class Post <<Publicaciones>> {
+  - id: Long
+  - title: String
+}
+
+' =========== ENTIDADES ===========
+
+class Follow {
+  - id: Long
+}
+
+class PostLike {
+  - id: Long
+  - createdAt: LocalDateTime
+}
+
+' =========== RELACIONES ===========
+
+Follow "*" --> "1" User : follower
+Follow "*" --> "1" User : followee
+PostLike "*" --> "1" User
+PostLike "*" --> "1" Post
+
+' =========== NOTAS ===========
+
+note bottom of Follow
+  Un usuario no puede
+  seguir dos veces al
+  mismo usuario.
+end note
+
+note bottom of PostLike
+  Un usuario no puede dar like
+  más de una vez a la misma
+  publicación.
+end note
+
+note "Todas las clases cuentan con getters y setters\npara sus atributos, generados automáticamente\nmediante Lombok (@Getter, @Setter, @Data)." as NotaLombok
+
+@enduml

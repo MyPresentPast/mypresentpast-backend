@@ -1,0 +1,97 @@
+@startuml DIAG_Usuarios
+
+' Subdominio: Usuarios y Autenticación
+' Cubre el modelo de usuario, la verificación de email y las
+' solicitudes para convertirse en institución.
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title Subdominio: Usuarios y Autenticación
+
+' =========== ENTIDADES ===========
+
+class User {
+  - id: Long
+  - profileUsername: String
+  - password: String
+  - email: String
+  - name: String
+  - lastName: String
+  - role: UserRole
+  - avatar: String
+  - emailVerified: boolean
+}
+
+class VerificationToken {
+  - id: Long
+  - token: String
+  - expiryDate: LocalDateTime
+}
+
+class InstitutionRequest {
+  - id: Long
+  - institutionName: String
+  - legalAddress: String
+  - documentUrl: String
+  - officialPhone: String
+  - type: InstitutionType
+  - officialRegistryNumber: String
+  - officialWebsite: String
+  - status: RequestStatus
+  - rejectionReason: String
+  - createdAt: LocalDateTime
+  - reviewedAt: LocalDateTime
+}
+
+' =========== ENUMS ===========
+
+enum UserRole {
+  ADMIN
+  NORMAL
+  INSTITUTION
+}
+
+enum InstitutionType {
+  UNIVERSITY
+  SCHOOL
+  MUSEUM
+  GOVERNMENT
+  NGO
+  LIBRARY
+  RESEARCH
+  OTHER
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+' =========== RELACIONES ===========
+
+VerificationToken "1" --> "1" User
+InstitutionRequest "*" --> "1" User : user
+InstitutionRequest "*" --> "0..1" User : reviewedBy
+
+User ..> UserRole
+InstitutionRequest ..> InstitutionType
+InstitutionRequest ..> RequestStatus
+
+' =========== NOTAS ===========
+
+note bottom of InstitutionRequest
+  Al ser APPROVED, el role del User
+  cambia a INSTITUTION automáticamente.
+  Solo usuarios con rol NORMAL
+  pueden enviar esta solicitud.
+end note
+
+note "Todas las clases cuentan con getters y setters\npara sus atributos, generados automáticamente\nmediante Lombok (@Getter, @Setter, @Data)." as NotaLombok
+
+@enduml
