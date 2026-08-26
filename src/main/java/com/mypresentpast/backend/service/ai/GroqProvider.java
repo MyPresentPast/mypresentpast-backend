@@ -27,7 +27,7 @@ public class GroqProvider implements AIProvider {
     @Value("${ai.groq.api-url:https://api.groq.com/openai/v1/chat/completions}")
     private String apiUrl;
 
-    @Value("${ai.groq.model:llama-3.1-8b-instant}")
+    @Value("${ai.groq.model:openai/gpt-oss-120b}")
     private String model;
 
     @Value("${ai.groq.max-tokens:1000}")
