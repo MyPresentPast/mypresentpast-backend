@@ -15,6 +15,7 @@ public class CorsConfig {
                 registry
                         .addMapping("/**")
                         .allowedOrigins(
+                            "http://localhost",          // Frontend Angular servido por Nginx en Docker
                             "http://localhost:3000",     // React
                             "http://localhost:4200",     // Angular
                             "http://localhost:8080",     // Postman/Tests

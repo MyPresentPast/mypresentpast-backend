@@ -1,25 +1,38 @@
-version: '3.8'
+name: mypresentpast
 
 services:
   app:
     build: .
-    container_name: spring-app
+    container_name: mypresentpast-backend
     ports:
-      - "8081:8081"
+      - "8092:8092"
+    env_file:
+      - .env
     environment:
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      DB_HOST: db # en local se usa localhost, pero en docker tenemos que hacer referencia al contenedor de postgres
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      SERVER_PORT: ${SERVER_PORT}
+      # Dentro de Docker se usa el nombre del servicio y el puerto interno de PostgreSQL.
+      DB_HOST: db
+      DB_PORT: 5432
+      SERVER_PORT: 8092
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - mypresentpast-network
+
+  frontend:
+    build:
+      context: ../mypresentpast-frontend
+    container_name: mypresentpast-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    networks:
+      - mypresentpast-network
 
   db:
     image: postgres:16
-    container_name: spring-db
+    container_name: mypresentpast-database
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
@@ -28,6 +41,17 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mypresentpast-network
 
 volumes:
   postgres_data:
+
+networks:
+  mypresentpast-network:
+    driver: bridge
