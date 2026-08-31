@@ -5,7 +5,8 @@ services:
     build: .
     container_name: mypresentpast-backend
     ports:
-      - "8092:8092"
+      # El frontend compartido consume la API mediante localhost:8081.
+      - "8081:8092"
     env_file:
       - .env
     environment:

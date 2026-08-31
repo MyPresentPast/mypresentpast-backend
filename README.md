@@ -93,6 +93,26 @@ mvn spring-boot:run
 #### Desde el IDE:
 - Ejecutar la clase `MypresentpastBackendApplication.java`
 
+## 🐳 Ejecución con Docker Compose
+
+El stack Docker levanta el frontend Angular con Nginx, el backend Spring Boot y PostgreSQL. Es necesario tener Docker Desktop en ejecución y un archivo `.env` configurado en este directorio.
+
+```bash
+docker compose up --build
+```
+
+Una vez iniciado, los servicios quedan disponibles en:
+
+- **Frontend**: `http://localhost`
+- **Backend**: `http://localhost:8081`
+- **PostgreSQL**: `localhost:5433`
+
+El backend escucha internamente en el puerto `8092`; Compose lo publica en `8081` para conservar la configuración habitual del frontend. Para detener el stack sin eliminar los datos de PostgreSQL:
+
+```bash
+docker compose down
+```
+
 ## 🌐 Endpoints
 
 La aplicación estará disponible en:
@@ -128,4 +148,4 @@ Configurado para permitir requests desde:
 1. Crear una rama para la nueva feature: `git checkout -b feature/nueva-funcionalidad`
 2. Hacer commit de los cambios: `git commit -m 'Agregar nueva funcionalidad'`
 3. Push a la rama: `git push origin feature/nueva-funcionalidad`
-4. Crear un Pull Request 
+4. Crear un Pull Request
